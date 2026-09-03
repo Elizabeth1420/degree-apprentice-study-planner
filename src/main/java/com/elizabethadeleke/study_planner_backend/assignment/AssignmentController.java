@@ -7,6 +7,9 @@ import java.util.UUID;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +35,13 @@ public class AssignmentController {
     public Assignment getAssignment(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID assignmentId) {
         UUID userId = UUID.fromString(jwt.getSubject());
         return assignmentService.getAssignment(userId, assignmentId);
+    }
+
+    @DeleteMapping("/api/assignments/{assignmentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAssignment(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID assignmentId) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        assignmentService.deleteAssignment(userId, assignmentId);
     }
 
     @PostMapping("/api/assignments")

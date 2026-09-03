@@ -13,8 +13,10 @@ const profile = document.getElementById("profile");
 const output = document.getElementById("output");
 const assignmentDetailSection = document.getElementById("assignment-detail-section");
 const assignmentDetail = document.getElementById("assignment-detail");
+const deleteAssignmentButton = document.getElementById("delete-assignment-button");
 
 let accessToken = null;
+let selectedAssignmentId = null;
 
 function show(message) {
   output.textContent = message;
@@ -95,7 +97,7 @@ async function loadAssignmentDetail(assignmentId) {
   }
 
   const assignment = await response.json();
-
+  selectedAssignmentId = assignment.assignmentId;
   assignmentDetail.replaceChildren();
   assignmentDetailSection.hidden = false;
 
@@ -171,6 +173,33 @@ assignmentForm.addEventListener("submit", async (event) => {
 
   show("Assignment created.");
   assignmentForm.reset();
+  await loadAssignments();
+});
+
+deleteAssignmentButton.addEventListener("click", async () => {
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  const confirmed = window.confirm("Delete this assignment?");
+
+  if (!confirmed) {
+    return;
+  }
+
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}`, {
+    method: "DELETE"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  selectedAssignmentId = null;
+  assignmentDetail.replaceChildren();
+  assignmentDetailSection.hidden = true;
+  show("Assignment deleted.");
   await loadAssignments();
 });
 

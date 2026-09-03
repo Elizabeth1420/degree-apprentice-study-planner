@@ -31,6 +31,12 @@ public class AssignmentService {
     }
 
     @Transactional
+    public void deleteAssignment(UUID userId, UUID assignmentId) {
+        Assignment assignment = getAssignment(userId, assignmentId);
+        repository.delete(assignment);
+    }
+
+    @Transactional
     public Assignment createAssignment(
             UUID userId,
             String moduleCode,
