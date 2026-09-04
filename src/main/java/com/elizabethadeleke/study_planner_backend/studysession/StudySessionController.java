@@ -57,14 +57,34 @@ public class StudySessionController {
         return studySessionService.startSession(userId, assignmentId, sessionId);
     }
 
-    @PatchMapping("/api/assignments/{assignmentId}/study-sessions/{sessionId}/stop")
-    public StudySession stopSession(
+        @PatchMapping("/api/assignments/{assignmentId}/study-sessions/{sessionId}/pause")
+    public StudySession pauseSession(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID assignmentId,
             @PathVariable UUID sessionId) {
 
         UUID userId = UUID.fromString(jwt.getSubject());
-        return studySessionService.stopSession(userId, assignmentId, sessionId);
+        return studySessionService.pauseSession(userId, assignmentId, sessionId);
+    }
+
+    @PatchMapping("/api/assignments/{assignmentId}/study-sessions/{sessionId}/resume")
+    public StudySession resumeSession(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID sessionId) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return studySessionService.resumeSession(userId, assignmentId, sessionId);
+    }
+
+    @PatchMapping("/api/assignments/{assignmentId}/study-sessions/{sessionId}/complete")
+    public StudySession completeSession(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID sessionId) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return studySessionService.completeSession(userId, assignmentId, sessionId);
     }
 
     public record CreateStudySessionRequest(

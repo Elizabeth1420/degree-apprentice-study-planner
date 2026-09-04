@@ -256,18 +256,32 @@ async function loadStudySessions(assignmentId) {
     const startButton = document.createElement("button");
     startButton.type = "button";
     startButton.textContent = "Start";
-    startButton.disabled = session.timerStatus === "RUNNING" || session.sessionStatus === "COMPLETED";
+    startButton.disabled = session.timerStatus !== "NOT_STARTED";
     startButton.addEventListener("click", () => startStudySession(session.sessionId));
 
-    const stopButton = document.createElement("button");
-    stopButton.type = "button";
-    stopButton.textContent = "Stop";
-    stopButton.disabled = session.timerStatus !== "RUNNING";
-    stopButton.addEventListener("click", () => stopStudySession(session.sessionId));
+    const pauseButton = document.createElement("button");
+    pauseButton.type = "button";
+    pauseButton.textContent = "Pause";
+    pauseButton.disabled = session.timerStatus !== "RUNNING";
+    pauseButton.addEventListener("click", () => pauseStudySession(session.sessionId));
+
+    const resumeButton = document.createElement("button");
+    resumeButton.type = "button";
+    resumeButton.textContent = "Resume";
+    resumeButton.disabled = session.timerStatus !== "PAUSED";
+    resumeButton.addEventListener("click", () => resumeStudySession(session.sessionId));
+
+    const completeButton = document.createElement("button");
+    completeButton.type = "button";
+    completeButton.textContent = "Complete";
+    completeButton.disabled = session.sessionStatus === "COMPLETED";
+    completeButton.addEventListener("click", () => completeStudySession(session.sessionId));
 
     item.appendChild(text);
     item.appendChild(startButton);
-    item.appendChild(stopButton);
+    item.appendChild(pauseButton);
+    item.appendChild(resumeButton);
+    item.appendChild(completeButton);
     studySessionList.appendChild(item);
   }
 }
@@ -286,8 +300,8 @@ async function startStudySession(sessionId) {
   show("Study session started.");
 }
 
-async function stopStudySession(sessionId) {
-  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/stop`, {
+async function pauseStudySession(sessionId) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/pause`, {
     method: "PATCH"
   });
 
@@ -297,7 +311,35 @@ async function stopStudySession(sessionId) {
   }
 
   await loadStudySessions(selectedAssignmentId);
-  show("Study session stopped.");
+  show("Study session paused.");
+}
+
+async function resumeStudySession(sessionId) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/resume`, {
+    method: "PATCH"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadStudySessions(selectedAssignmentId);
+  show("Study session resumed.");
+}
+
+async function completeStudySession(sessionId) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/complete`, {
+    method: "PATCH"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadStudySessions(selectedAssignmentId);
+  show("Study session completed.");
 }
 
 loginForm.addEventListener("submit", async (event) => {

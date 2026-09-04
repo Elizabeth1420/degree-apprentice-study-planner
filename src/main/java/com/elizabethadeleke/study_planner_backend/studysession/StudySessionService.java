@@ -18,6 +18,7 @@ import com.elizabethadeleke.study_planner_backend.assignment.AssignmentService;
 public class StudySessionService {
 
     private static final String RUNNING = "RUNNING";
+    private static final String PAUSED = "PAUSED";
     private static final String STOPPED = "STOPPED";
     private static final String ACTIVE = "ACTIVE";
     private static final String COMPLETED = "COMPLETED";
@@ -74,7 +75,45 @@ public class StudySessionService {
 
         session.setStartTime(OffsetDateTime.now());
         session.setEndTime(null);
-        session.setDurationSeconds(0);
+
+        if (session.getDurationSeconds() == null) {
+            session.setDurationSeconds(0);
+        }
+
+        session.setTimerStatus(RUNNING);
+        session.setSessionStatus(ACTIVE);
+
+        return studySessionRepository.save(session);
+    }
+
+        @Transactional
+    public StudySession pauseSession(UUID userId, UUID assignmentId, UUID sessionId) {
+        StudySession session = getSessionForAssignment(userId, assignmentId, sessionId);
+
+        if (!RUNNING.equals(session.getTimerStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only running sessions can be paused");
+        }
+
+        OffsetDateTime pausedAt = OffsetDateTime.now();
+        session.setDurationSeconds(calculateDurationSeconds(session, pausedAt));
+        session.setStartTime(null);
+        session.setEndTime(null);
+        session.setTimerStatus(PAUSED);
+        session.setSessionStatus(ACTIVE);
+
+        return studySessionRepository.save(session);
+    }
+
+    @Transactional
+    public StudySession resumeSession(UUID userId, UUID assignmentId, UUID sessionId) {
+        StudySession session = getSessionForAssignment(userId, assignmentId, sessionId);
+
+        if (!PAUSED.equals(session.getTimerStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only paused sessions can be resumed");
+        }
+
+        session.setStartTime(OffsetDateTime.now());
+        session.setEndTime(null);
         session.setTimerStatus(RUNNING);
         session.setSessionStatus(ACTIVE);
 
@@ -82,24 +121,33 @@ public class StudySessionService {
     }
 
     @Transactional
-    public StudySession stopSession(UUID userId, UUID assignmentId, UUID sessionId) {
+    public StudySession completeSession(UUID userId, UUID assignmentId, UUID sessionId) {
         StudySession session = getSessionForAssignment(userId, assignmentId, sessionId);
 
-        if (session.getStartTime() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Session has not been started");
+        OffsetDateTime completedAt = OffsetDateTime.now();
+
+        if (RUNNING.equals(session.getTimerStatus())) {
+            session.setDurationSeconds(calculateDurationSeconds(session, completedAt));
         }
 
-        OffsetDateTime finishedAt = OffsetDateTime.now();
-        int durationSeconds = Math.toIntExact(Duration.between(session.getStartTime(), finishedAt).getSeconds());
-
-        session.setEndTime(finishedAt);
-        session.setDurationSeconds(durationSeconds);
+        session.setEndTime(completedAt);
+        session.setStartTime(null);
         session.setTimerStatus(STOPPED);
         session.setSessionStatus(COMPLETED);
 
         return studySessionRepository.save(session);
     }
 
+        private int calculateDurationSeconds(StudySession session, OffsetDateTime finishedAt) {
+        int existingDuration = session.getDurationSeconds() == null ? 0 : session.getDurationSeconds();
+
+        if (session.getStartTime() == null) {
+            return existingDuration;
+        }
+
+        return existingDuration + Math.toIntExact(Duration.between(session.getStartTime(), finishedAt).getSeconds());
+    }
+    
     private StudySession getSessionForAssignment(UUID userId, UUID assignmentId, UUID sessionId) {
         assignmentService.getAssignment(userId, assignmentId);
 
