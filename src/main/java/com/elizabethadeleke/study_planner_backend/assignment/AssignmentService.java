@@ -44,11 +44,17 @@ public class AssignmentService {
     }
 
     @Transactional
-    public Assignment updateBriefFile(UUID userId, UUID assignmentId, String uploadedFileName,
-            String uploadedFileType) {
+    public Assignment updateBriefFile(
+            UUID userId,
+            UUID assignmentId,
+            String uploadedFileName,
+            String uploadedFileType,
+            String extractedText) {
+
         Assignment assignment = getAssignment(userId, assignmentId);
         assignment.setUploadedFileName(uploadedFileName);
         assignment.setUploadedFileType(uploadedFileType);
+        assignment.setExtractedText(extractedText);
         return repository.save(assignment);
     }
 

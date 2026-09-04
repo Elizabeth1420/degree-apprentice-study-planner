@@ -25,8 +25,13 @@ public class AssignmentController {
 
     private final AssignmentService assignmentService;
 
-    public AssignmentController(AssignmentService assignmentService) {
+    private final BriefTextExtractionService briefTextExtractionService;
+
+    public AssignmentController(
+            AssignmentService assignmentService,
+            BriefTextExtractionService briefTextExtractionService) {
         this.assignmentService = assignmentService;
+        this.briefTextExtractionService = briefTextExtractionService;
     }
 
     @GetMapping("/api/assignments")
@@ -65,11 +70,13 @@ public class AssignmentController {
             @RequestParam("file") MultipartFile file) {
 
         UUID userId = UUID.fromString(jwt.getSubject());
+        String extractedText = briefTextExtractionService.extractText(file);
         return assignmentService.updateBriefFile(
                 userId,
                 assignmentId,
                 file.getOriginalFilename(),
-                file.getContentType());
+                file.getContentType(),
+                extractedText);
     }
 
     @PostMapping("/api/assignments")
