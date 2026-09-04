@@ -14,6 +14,8 @@ const output = document.getElementById("output");
 const assignmentDetailSection = document.getElementById("assignment-detail-section");
 const assignmentDetail = document.getElementById("assignment-detail");
 const deleteAssignmentButton = document.getElementById("delete-assignment-button");
+const briefTextInput = document.getElementById("brief-text");
+const saveBriefTextButton = document.getElementById("save-brief-text-button");
 
 let accessToken = null;
 let selectedAssignmentId = null;
@@ -98,6 +100,7 @@ async function loadAssignmentDetail(assignmentId) {
 
   const assignment = await response.json();
   selectedAssignmentId = assignment.assignmentId;
+  briefTextInput.value = assignment.extractedText || "";
   assignmentDetail.replaceChildren();
   assignmentDetailSection.hidden = false;
 
@@ -197,10 +200,35 @@ deleteAssignmentButton.addEventListener("click", async () => {
   }
 
   selectedAssignmentId = null;
+  briefTextInput.value = "";
   assignmentDetail.replaceChildren();
   assignmentDetailSection.hidden = true;
   show("Assignment deleted.");
   await loadAssignments();
+});
+
+saveBriefTextButton.addEventListener("click", async () => {
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/brief-text`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      extractedText: briefTextInput.value || null
+    })
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadAssignmentDetail(selectedAssignmentId);
+  show("Brief text saved.");
 });
 
 loadAssignmentsButton.addEventListener("click", loadAssignments);

@@ -37,6 +37,13 @@ public class AssignmentService {
     }
 
     @Transactional
+    public Assignment updateBriefText(UUID userId, UUID assignmentId, String extractedText) {
+        Assignment assignment = getAssignment(userId, assignmentId);
+        assignment.setExtractedText(extractedText);
+        return repository.save(assignment);
+    }
+
+    @Transactional
     public Assignment createAssignment(
             UUID userId,
             String moduleCode,

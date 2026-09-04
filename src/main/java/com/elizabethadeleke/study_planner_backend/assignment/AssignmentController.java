@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -44,6 +45,16 @@ public class AssignmentController {
         assignmentService.deleteAssignment(userId, assignmentId);
     }
 
+    @PatchMapping("/api/assignments/{assignmentId}/brief-text")
+    public Assignment updateBriefText(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @RequestBody UpdateBriefTextRequest request) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return assignmentService.updateBriefText(userId, assignmentId, request.extractedText());
+    }
+
     @PostMapping("/api/assignments")
     public Assignment createAssignment(
             @AuthenticationPrincipal Jwt jwt,
@@ -65,6 +76,9 @@ public class AssignmentController {
                 request.officialDeadline(),
                 request.personalTargetDate(),
                 request.personalAssignmentGoal());
+    }
+
+    public record UpdateBriefTextRequest(String extractedText) {
     }
 
     public record CreateAssignmentRequest(

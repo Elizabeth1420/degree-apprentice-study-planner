@@ -68,6 +68,9 @@ public class Assignment {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @Column(name = "extracted_text", columnDefinition = "text")
+    private String extractedText;
+
     protected Assignment() {
     }
 
@@ -109,4 +112,6 @@ public class Assignment {
     public void setPersonalAssignmentGoal(String personalAssignmentGoal) { this.personalAssignmentGoal = personalAssignmentGoal; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    public String getExtractedText() { return extractedText; }
+    public void setExtractedText(String extractedText) { this.extractedText = extractedText; }
 }
