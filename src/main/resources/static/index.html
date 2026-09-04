@@ -50,14 +50,21 @@
     <button id="load-assignments-button">Refresh assignments</button>
     <ul id="assignment-list"></ul>
     <section id="assignment-detail-section" hidden>
+      
       <h3>Assignment details</h3>
       <div id="assignment-detail"></div>
+
+      <h3>Progress</h3>
+      <div id="progress-summary"></div>
+
       <h3>Requirements</h3>
       <button id="generate-requirements-button" type="button">Generate requirements</button>
       <ul id="requirements-list"></ul>
+
       <h3>Tasks</h3>
       <button id="generate-tasks-button" type="button">Generate tasks</button>
       <ul id="tasks-list"></ul>
+
       <h3>Study sessions</h3>
       <form id="study-session-form">
       <input id="session-name" placeholder="Session name">
@@ -66,9 +73,11 @@
       <button type="submit">Create study session</button>
       </form>
       <ul id="study-session-list"></ul>
+
       <h3>Assignment brief text</h3>
       <textarea id="brief-text" placeholder="Paste assignment brief text here"></textarea>
       <button id="save-brief-text-button" type="button">Save brief text</button>
+
       <h3>Assignment brief file</h3>
       <input id="brief-file" type="file" accept=".pdf,.docx">
       <button id="upload-brief-file-button" type="button">Upload brief file</button>

@@ -24,6 +24,7 @@ const generateTasksButton = document.getElementById("generate-tasks-button");
 const tasksList = document.getElementById("tasks-list");
 const studySessionForm = document.getElementById("study-session-form");
 const studySessionList = document.getElementById("study-session-list");
+const progressSummary = document.getElementById("progress-summary");
 
 let accessToken = null;
 let selectedAssignmentId = null;
@@ -106,6 +107,55 @@ async function loadAssignmentDetail(assignmentId) {
     return;
   }
 
+  function formatDuration(seconds) {
+  const totalSeconds = Number(seconds || 0);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${remainingSeconds}s`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+
+  return `${remainingSeconds}s`;
+}
+
+async function loadProgress(assignmentId) {
+  const response = await apiFetch(`/api/assignments/${assignmentId}/progress`);
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  const progress = await response.json();
+
+  progressSummary.replaceChildren();
+
+  addProgressItem("Task completion", `${progress.taskCompletionPercentage}%`);
+  addProgressItem("Tasks", `${progress.completedTasks} complete out of ${progress.totalTasks}`);
+  addProgressItem("Approved tasks", `${progress.approvedTasks}`);
+  addProgressItem("Suggested tasks", `${progress.suggestedTasks}`);
+  addProgressItem("Study sessions", `${progress.completedSessions} complete out of ${progress.totalSessions}`);
+  addProgressItem("Active sessions", `${progress.activeSessions}`);
+  addProgressItem("Total study time", formatDuration(progress.totalStudySeconds));
+}
+
+function addProgressItem(label, value) {
+  const paragraph = document.createElement("p");
+  const labelElement = document.createElement("strong");
+
+  labelElement.textContent = `${label}: `;
+  paragraph.appendChild(labelElement);
+  paragraph.append(value);
+
+  progressSummary.appendChild(paragraph);
+}
+
 
   const assignment = await response.json();
   selectedAssignmentId = assignment.assignmentId;
@@ -126,6 +176,7 @@ async function loadAssignmentDetail(assignmentId) {
   addDetail("Personal assignment goal", assignment.personalAssignmentGoal);
   addDetail("Uploaded file", assignment.uploadedFileName);
   addDetail("Uploaded file type", assignment.uploadedFileType);
+  await loadProgress(selectedAssignmentId);
   await loadRequirements(selectedAssignmentId);
   await loadTasks(selectedAssignmentId);
   await loadStudySessions(selectedAssignmentId);
