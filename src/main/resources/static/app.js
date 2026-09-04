@@ -20,6 +20,8 @@ const briefFileInput = document.getElementById("brief-file");
 const uploadBriefFileButton = document.getElementById("upload-brief-file-button");
 const generateRequirementsButton = document.getElementById("generate-requirements-button");
 const requirementsList = document.getElementById("requirements-list");
+const generateTasksButton = document.getElementById("generate-tasks-button");
+const tasksList = document.getElementById("tasks-list");
 
 let accessToken = null;
 let selectedAssignmentId = null;
@@ -123,6 +125,7 @@ async function loadAssignmentDetail(assignmentId) {
   addDetail("Uploaded file", assignment.uploadedFileName);
   addDetail("Uploaded file type", assignment.uploadedFileType);
   await loadRequirements(selectedAssignmentId);
+  await loadTasks(selectedAssignmentId);
 }
 
 async function loadRequirements(assignmentId) {
@@ -147,6 +150,31 @@ async function loadRequirements(assignmentId) {
     const item = document.createElement("li");
     item.textContent = `${requirement.requirementText} (${requirement.sourceSection})`;
     requirementsList.appendChild(item);
+  }
+}
+
+async function loadTasks(assignmentId) {
+  const response = await apiFetch(`/api/assignments/${assignmentId}/tasks`);
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  const tasks = await response.json();
+  tasksList.innerHTML = "";
+
+  if (tasks.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = "No tasks generated yet.";
+    tasksList.appendChild(item);
+    return;
+  }
+
+  for (const task of tasks) {
+    const item = document.createElement("li");
+    item.textContent = `${task.taskTitle} - ${task.taskStatus} (${task.approvalStatus})`;
+    tasksList.appendChild(item);
   }
 }
 
@@ -310,6 +338,24 @@ generateRequirementsButton.addEventListener("click", async () => {
 
   await loadRequirements(selectedAssignmentId);
   show("Requirements generated.");
+});
+
+generateTasksButton.addEventListener("click", async () => {
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/tasks/generate`, {
+    method: "POST"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadTasks(selectedAssignmentId);
+  show("Tasks generated.");
 });
 
 loadAssignmentsButton.addEventListener("click", loadAssignments);
