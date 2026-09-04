@@ -75,4 +75,8 @@ public class StudyTask {
     public void setApprovalStatus(String approvalStatus) {
         this.approvalStatus = approvalStatus;
     }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+}
 }

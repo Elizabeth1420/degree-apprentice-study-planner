@@ -22,6 +22,9 @@ const generateRequirementsButton = document.getElementById("generate-requirement
 const requirementsList = document.getElementById("requirements-list");
 const generateTasksButton = document.getElementById("generate-tasks-button");
 const tasksList = document.getElementById("tasks-list");
+const manualTaskForm = document.getElementById("manual-task-form");
+const manualTaskTitleInput = document.getElementById("manual-task-title");
+const manualTaskDescriptionInput = document.getElementById("manual-task-description");
 const studySessionForm = document.getElementById("study-session-form");
 const studySessionList = document.getElementById("study-session-list");
 const progressSummary = document.getElementById("progress-summary");
@@ -282,6 +285,31 @@ async function completeTask(taskId) {
   await loadStudySessions(selectedAssignmentId);
 }
 
+async function createManualTask(taskTitle, taskDescription) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/tasks`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      taskTitle,
+      taskDescription: taskDescription || null
+    })
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  manualTaskForm.reset();
+  await loadTasks(selectedAssignmentId);
+  await loadStudySessions(selectedAssignmentId);
+  await loadStudyHistory(selectedAssignmentId);
+  await loadProgress(selectedAssignmentId);
+  show("Manual task added.");
+}
+
 async function loadStudySessions(assignmentId) {
   const response = await apiFetch(`/api/assignments/${assignmentId}/study-sessions`);
 
@@ -479,6 +507,8 @@ async function completeStudySession(sessionId) {
   }
 
   await loadStudySessions(selectedAssignmentId);
+  await loadStudyHistory(selectedAssignmentId);
+  await loadProgress(selectedAssignmentId);
   show("Study session completed.");
 }
 
@@ -701,6 +731,19 @@ assignmentForm.addEventListener("submit", async (event) => {
   show("Assignment created.");
   assignmentForm.reset();
   await loadAssignments();
+});
+
+manualTaskForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  await createManualTask(
+    manualTaskTitleInput.value,
+    manualTaskDescriptionInput.value
+  );
 });
 
 studySessionForm.addEventListener("submit", async (event) => {

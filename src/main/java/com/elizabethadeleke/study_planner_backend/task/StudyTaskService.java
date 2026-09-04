@@ -17,6 +17,7 @@ import com.elizabethadeleke.study_planner_backend.requirement.RequirementService
 public class StudyTaskService {
 
     private static final String AI = "AI";
+    private static final String STUDENT = "STUDENT";
     private static final String APPROVED = "APPROVED";
     private static final String COMPLETE = "COMPLETE";
 
@@ -66,6 +67,32 @@ public class StudyTaskService {
 
         return studyTaskRepository.saveAll(tasks);
     }
+
+    @Transactional
+    public StudyTask createManualTask(
+        UUID userId,
+        UUID assignmentId,
+        String taskTitle,
+        String taskDescription) {
+
+    assignmentService.getAssignment(userId, assignmentId);
+
+    if (taskTitle == null || taskTitle.isBlank()) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task title is required");
+    }
+
+    StudyTask task = new StudyTask(
+            assignmentId,
+            null,
+            taskTitle.trim(),
+            taskDescription == null || taskDescription.isBlank() ? null : taskDescription.trim(),
+            null);
+
+    task.setOrigin(STUDENT);
+    task.setApprovalStatus(APPROVED);
+
+    return studyTaskRepository.save(task);
+}
 
         @Transactional
     public StudyTask approveTask(UUID userId, UUID assignmentId, UUID taskId) {

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -38,6 +39,21 @@ public class StudyTaskController {
         return studyTaskService.generateTasks(userId, assignmentId);
     }
 
+    @PostMapping("/api/assignments/{assignmentId}/tasks")
+    public StudyTask createManualTask(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @RequestBody CreateManualTaskRequest request) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        return studyTaskService.createManualTask(
+                userId,
+                assignmentId,
+                request.taskTitle(),
+                request.taskDescription());
+    }
+
         @PatchMapping("/api/assignments/{assignmentId}/tasks/{taskId}/approve")
     public StudyTask approveTask(
             @AuthenticationPrincipal Jwt jwt,
@@ -57,4 +73,9 @@ public class StudyTaskController {
         UUID userId = UUID.fromString(jwt.getSubject());
         return studyTaskService.completeTask(userId, assignmentId, taskId);
     }
+
+    public record CreateManualTaskRequest(
+        String taskTitle,
+        String taskDescription) {
+}
 }
