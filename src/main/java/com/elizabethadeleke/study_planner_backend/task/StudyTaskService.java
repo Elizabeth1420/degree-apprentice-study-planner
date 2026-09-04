@@ -19,7 +19,9 @@ public class StudyTaskService {
 
     private static final String AI = "AI";
     private static final String STUDENT = "STUDENT";
+    private static final String SUGGESTED = "SUGGESTED";
     private static final String APPROVED = "APPROVED";
+    private static final String REJECTED = "REJECTED";
     private static final String COMPLETE = "COMPLETE";
 
     private final StudyTaskRepository studyTaskRepository;
@@ -102,6 +104,24 @@ public class StudyTaskService {
     public StudyTask approveTask(UUID userId, UUID assignmentId, UUID taskId) {
         StudyTask task = getTaskForAssignment(userId, assignmentId, taskId);
         task.setApprovalStatus(APPROVED);
+        return studyTaskRepository.save(task);
+    }
+
+    @Transactional
+    public StudyTask rejectTask(UUID userId, UUID assignmentId, UUID taskId) {
+        StudyTask task = getTaskForAssignment(userId, assignmentId, taskId);
+
+        if (!AI.equals(task.getOrigin())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only generated tasks can be rejected");
+        }
+
+        if (!SUGGESTED.equals(task.getApprovalStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only suggested tasks can be rejected");
+        }
+
+        sessionTaskRepository.deleteByTaskId(taskId);
+        task.setApprovalStatus(REJECTED);
+
         return studyTaskRepository.save(task);
     }
 

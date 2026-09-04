@@ -65,6 +65,16 @@ public class StudyTaskController {
         return studyTaskService.approveTask(userId, assignmentId, taskId);
     }
 
+    @PatchMapping("/api/assignments/{assignmentId}/tasks/{taskId}/reject")
+    public StudyTask rejectTask(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID taskId) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return studyTaskService.rejectTask(userId, assignmentId, taskId);
+    }
+
     @PatchMapping("/api/assignments/{assignmentId}/tasks/{taskId}/complete")
     public StudyTask completeTask(
             @AuthenticationPrincipal Jwt jwt,

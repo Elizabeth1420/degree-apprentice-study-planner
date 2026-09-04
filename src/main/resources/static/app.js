@@ -239,25 +239,28 @@ async function loadTasks(assignmentId) {
     const approveButton = document.createElement("button");
     approveButton.type = "button";
     approveButton.textContent = "Approve";
-    approveButton.disabled = task.approvalStatus === "APPROVED";
+    approveButton.disabled = task.approvalStatus !== "SUGGESTED";
     approveButton.addEventListener("click", () => approveTask(task.taskId));
 
     const completeButton = document.createElement("button");
     completeButton.type = "button";
     completeButton.textContent = "Mark complete";
-    completeButton.disabled = task.taskStatus === "COMPLETE";
+    completeButton.disabled = task.taskStatus === "COMPLETE" || task.approvalStatus !== "APPROVED";
     completeButton.addEventListener("click", () => completeTask(task.taskId));
 
     item.appendChild(text);
-    item.appendChild(approveButton);
-    item.appendChild(completeButton);
 
-    if (task.origin === "STUDENT") {
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.textContent = "Delete manual task";
-      deleteButton.addEventListener("click", () => deleteManualTask(task.taskId));
-      item.appendChild(deleteButton);
+    if (task.approvalStatus !== "REJECTED") {
+      item.appendChild(approveButton);
+      item.appendChild(completeButton);
+    }
+
+    if (task.origin === "AI" && task.approvalStatus === "SUGGESTED") {
+      const rejectButton = document.createElement("button");
+      rejectButton.type = "button";
+      rejectButton.textContent = "Reject";
+      rejectButton.addEventListener("click", () => rejectTask(task.taskId));
+      item.appendChild(rejectButton);
     }
 
     tasksList.appendChild(item);
@@ -276,6 +279,29 @@ async function approveTask(taskId) {
 
   await loadTasks(selectedAssignmentId);
   show("Task approved.");
+}
+
+async function rejectTask(taskId) {
+  const confirmed = window.confirm("Reject this generated task?");
+
+  if (!confirmed) {
+    return;
+  }
+
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/tasks/${taskId}/reject`, {
+    method: "PATCH"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadTasks(selectedAssignmentId);
+  await loadStudySessions(selectedAssignmentId);
+  await loadStudyHistory(selectedAssignmentId);
+  await loadProgress(selectedAssignmentId);
+  show("Generated task rejected.");
 }
 
 async function completeTask(taskId) {
@@ -440,7 +466,10 @@ async function loadStudySessions(assignmentId) {
       sessionTaskList.appendChild(linkedItem);
     }
 
-    const availableTasks = tasks.filter(task => !linkedTaskIds.includes(task.taskId));
+    const availableTasks = tasks.filter(task =>
+      !linkedTaskIds.includes(task.taskId) &&
+      task.approvalStatus === "APPROVED"
+    );
 
     const taskSelect = document.createElement("select");
     const placeholderOption = document.createElement("option");
