@@ -18,6 +18,8 @@ const briefTextInput = document.getElementById("brief-text");
 const saveBriefTextButton = document.getElementById("save-brief-text-button");
 const briefFileInput = document.getElementById("brief-file");
 const uploadBriefFileButton = document.getElementById("upload-brief-file-button");
+const generateRequirementsButton = document.getElementById("generate-requirements-button");
+const requirementsList = document.getElementById("requirements-list");
 
 let accessToken = null;
 let selectedAssignmentId = null;
@@ -100,6 +102,7 @@ async function loadAssignmentDetail(assignmentId) {
     return;
   }
 
+
   const assignment = await response.json();
   selectedAssignmentId = assignment.assignmentId;
   briefTextInput.value = assignment.extractedText || "";
@@ -119,6 +122,32 @@ async function loadAssignmentDetail(assignmentId) {
   addDetail("Personal assignment goal", assignment.personalAssignmentGoal);
   addDetail("Uploaded file", assignment.uploadedFileName);
   addDetail("Uploaded file type", assignment.uploadedFileType);
+  await loadRequirements(selectedAssignmentId);
+}
+
+async function loadRequirements(assignmentId) {
+  const response = await apiFetch(`/api/assignments/${assignmentId}/requirements`);
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  const requirements = await response.json();
+  requirementsList.innerHTML = "";
+
+  if (requirements.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = "No requirements generated yet.";
+    requirementsList.appendChild(item);
+    return;
+  }
+
+  for (const requirement of requirements) {
+    const item = document.createElement("li");
+    item.textContent = `${requirement.requirementText} (${requirement.sourceSection})`;
+    requirementsList.appendChild(item);
+  }
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -263,6 +292,24 @@ uploadBriefFileButton.addEventListener("click", async () => {
   briefFileInput.value = "";
   await loadAssignmentDetail(selectedAssignmentId);
   show("Brief file uploaded.");
+});
+
+generateRequirementsButton.addEventListener("click", async () => {
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/requirements/generate`, {
+    method: "POST"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadRequirements(selectedAssignmentId);
+  show("Requirements generated.");
 });
 
 loadAssignmentsButton.addEventListener("click", loadAssignments);
