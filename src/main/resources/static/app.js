@@ -7,6 +7,7 @@ const loginSection = document.getElementById("login-section");
 const dashboardSection = document.getElementById("dashboard-section");
 const loginForm = document.getElementById("login-form");
 const assignmentForm = document.getElementById("assignment-form");
+const editAssignmentForm = document.getElementById("edit-assignment-form");
 const loadAssignmentsButton = document.getElementById("load-assignments-button");
 const assignmentList = document.getElementById("assignment-list");
 const profile = document.getElementById("profile");
@@ -164,6 +165,7 @@ async function loadAssignmentDetail(assignmentId) {
   const assignment = await response.json();
   selectedAssignmentId = assignment.assignmentId;
   briefTextInput.value = assignment.extractedText || "";
+  populateEditAssignmentForm(assignment);
   assignmentDetail.replaceChildren();
   assignmentDetailSection.hidden = false;
 
@@ -185,6 +187,21 @@ async function loadAssignmentDetail(assignmentId) {
   await loadTasks(selectedAssignmentId);
   await loadStudySessions(selectedAssignmentId);
   await loadStudyHistory(selectedAssignmentId);
+}
+
+function populateEditAssignmentForm(assignment) {
+  document.getElementById("edit-module-code").value = assignment.moduleCode || "";
+  document.getElementById("edit-module-title").value = assignment.moduleTitle || "";
+  document.getElementById("edit-module-leader").value = assignment.moduleLeader || "";
+  document.getElementById("edit-assignment-type").value = assignment.assignmentType || "";
+  document.getElementById("edit-assignment-weighting").value = assignment.assignmentWeighting || "";
+  document.getElementById("edit-official-deadline").value = assignment.officialDeadline || "";
+  document.getElementById("edit-personal-target-date").value = assignment.personalTargetDate || "";
+  document.getElementById("edit-assignment-task").value = assignment.assignmentTask || "";
+  document.getElementById("edit-assessment-criteria").value = assignment.assessmentCriteria || "";
+  document.getElementById("edit-learning-outcomes-ksbs").value = assignment.learningOutcomesKsbs || "";
+  document.getElementById("edit-referencing-guidance").value = assignment.referencingGuidance || "";
+  document.getElementById("edit-personal-assignment-goal").value = assignment.personalAssignmentGoal || "";
 }
 
 async function loadRequirements(assignmentId) {
@@ -792,6 +809,44 @@ assignmentForm.addEventListener("submit", async (event) => {
   show("Assignment created.");
   assignmentForm.reset();
   await loadAssignments();
+});
+
+editAssignmentForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      moduleCode: document.getElementById("edit-module-code").value || null,
+      moduleTitle: document.getElementById("edit-module-title").value || null,
+      moduleLeader: document.getElementById("edit-module-leader").value || null,
+      assignmentType: document.getElementById("edit-assignment-type").value || null,
+      assignmentWeighting: document.getElementById("edit-assignment-weighting").value || null,
+      assignmentTask: document.getElementById("edit-assignment-task").value || null,
+      assessmentCriteria: document.getElementById("edit-assessment-criteria").value || null,
+      learningOutcomesKsbs: document.getElementById("edit-learning-outcomes-ksbs").value || null,
+      referencingGuidance: document.getElementById("edit-referencing-guidance").value || null,
+      officialDeadline: document.getElementById("edit-official-deadline").value || null,
+      personalTargetDate: document.getElementById("edit-personal-target-date").value || null,
+      personalAssignmentGoal: document.getElementById("edit-personal-assignment-goal").value || null
+    })
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadAssignments();
+  await loadAssignmentDetail(selectedAssignmentId);
+  show("Assignment details updated.");
 });
 
 manualTaskForm.addEventListener("submit", async (event) => {

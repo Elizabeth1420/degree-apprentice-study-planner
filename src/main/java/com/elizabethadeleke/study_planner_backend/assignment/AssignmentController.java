@@ -102,6 +102,31 @@ public class AssignmentController {
                 request.personalAssignmentGoal());
     }
 
+    @PatchMapping("/api/assignments/{assignmentId}")
+public Assignment updateAssignment(
+        @AuthenticationPrincipal Jwt jwt,
+        @PathVariable UUID assignmentId,
+        @RequestBody UpdateAssignmentRequest request) {
+
+    UUID userId = UUID.fromString(jwt.getSubject());
+
+    return assignmentService.updateAssignment(
+            userId,
+            assignmentId,
+            request.moduleCode(),
+            request.moduleTitle(),
+            request.moduleLeader(),
+            request.assignmentType(),
+            request.assignmentWeighting(),
+            request.assignmentTask(),
+            request.assessmentCriteria(),
+            request.learningOutcomesKsbs(),
+            request.referencingGuidance(),
+            request.officialDeadline(),
+            request.personalTargetDate(),
+            request.personalAssignmentGoal());
+}
+
     public record UpdateBriefTextRequest(String extractedText) {
     }
 
@@ -118,5 +143,22 @@ public class AssignmentController {
             LocalDate officialDeadline,
             LocalDate personalTargetDate,
             String personalAssignmentGoal) {
+
     }
+
+    public record UpdateAssignmentRequest(
+        String moduleCode,
+        String moduleTitle,
+        String moduleLeader,
+        String assignmentType,
+        BigDecimal assignmentWeighting,
+        String assignmentTask,
+        String assessmentCriteria,
+        String learningOutcomesKsbs,
+        String referencingGuidance,
+        LocalDate officialDeadline,
+        LocalDate personalTargetDate,
+        String personalAssignmentGoal) {
+}
+
 }

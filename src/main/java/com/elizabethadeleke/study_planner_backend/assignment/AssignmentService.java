@@ -93,5 +93,41 @@ public class AssignmentService {
 
 
         return repository.save(assignment);
+
+    }
+
+    @Transactional
+    public Assignment updateAssignment(
+            UUID userId,
+            UUID assignmentId,
+            String moduleCode,
+            String moduleTitle,
+            String moduleLeader,
+            String assignmentType,
+            BigDecimal assignmentWeighting,
+            String assignmentTask,
+            String assessmentCriteria,
+            String learningOutcomesKsbs,
+            String referencingGuidance,
+            LocalDate officialDeadline,
+            LocalDate personalTargetDate,
+            String personalAssignmentGoal) {
+
+        Assignment assignment = getAssignment(userId, assignmentId);
+
+        assignment.setModuleCode(moduleCode);
+        assignment.setModuleTitle(moduleTitle);
+        assignment.setModuleLeader(moduleLeader);
+        assignment.setAssignmentType(assignmentType);
+        assignment.setAssignmentWeighting(assignmentWeighting);
+        assignment.setAssignmentTask(assignmentTask);
+        assignment.setAssessmentCriteria(assessmentCriteria);
+        assignment.setLearningOutcomesKsbs(learningOutcomesKsbs);
+        assignment.setReferencingGuidance(referencingGuidance);
+        assignment.setOfficialDeadline(officialDeadline);
+        assignment.setPersonalTargetDate(personalTargetDate);
+        assignment.setPersonalAssignmentGoal(personalAssignmentGoal);
+
+        return repository.save(assignment);
     }
 }

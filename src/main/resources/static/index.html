@@ -50,9 +50,35 @@
     <button id="load-assignments-button">Refresh assignments</button>
     <ul id="assignment-list"></ul>
     <section id="assignment-detail-section" hidden>
-    
       <h3>Assignment details</h3>
       <div id="assignment-detail"></div>
+    
+      <h3>Edit assignment details</h3>
+      <form id="edit-assignment-form">
+        <input id="edit-module-code" placeholder="Module code">
+        <input id="edit-module-title" placeholder="Module title">
+        <input id="edit-module-leader" placeholder="Module leader">
+        <input id="edit-assignment-type" placeholder="Assignment type">
+        <input id="edit-assignment-weighting" type="number" step="0.01" placeholder="Assignment weighting">
+    
+        <label>
+          Official deadline
+          <input id="edit-official-deadline" type="date">
+        </label>
+    
+        <label>
+          Personal target date
+          <input id="edit-personal-target-date" type="date">
+        </label>
+    
+        <textarea id="edit-assignment-task" placeholder="Assignment task"></textarea>
+        <textarea id="edit-assessment-criteria" placeholder="Assessment criteria"></textarea>
+        <textarea id="edit-learning-outcomes-ksbs" placeholder="Learning outcomes / KSBs"></textarea>
+        <textarea id="edit-referencing-guidance" placeholder="Referencing guidance"></textarea>
+        <textarea id="edit-personal-assignment-goal" placeholder="Personal assignment goal"></textarea>
+    
+        <button type="submit">Save assignment details</button>
+      </form>
     
       <h3>Progress</h3>
       <div id="progress-summary"></div>
@@ -69,7 +95,6 @@
         <textarea id="manual-task-description" placeholder="Manual task description"></textarea>
         <button type="submit">Add manual task</button>
       </form>
-    
       <ul id="tasks-list"></ul>
     
       <h3>Study sessions</h3>
