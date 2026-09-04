@@ -25,6 +25,7 @@ const tasksList = document.getElementById("tasks-list");
 const studySessionForm = document.getElementById("study-session-form");
 const studySessionList = document.getElementById("study-session-list");
 const progressSummary = document.getElementById("progress-summary");
+const studyHistory = document.getElementById("study-history");
 
 let accessToken = null;
 let selectedAssignmentId = null;
@@ -55,6 +56,55 @@ async function loadProfile() {
   const data = JSON.parse(text);
   profile.textContent = `Signed in as ${data.email}`;
   return data;
+}
+
+function formatDuration(seconds) {
+  const totalSeconds = Number(seconds || 0);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${remainingSeconds}s`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+
+  return `${remainingSeconds}s`;
+}
+
+async function loadProgress(assignmentId) {
+  const response = await apiFetch(`/api/assignments/${assignmentId}/progress`);
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  const progress = await response.json();
+
+  progressSummary.replaceChildren();
+
+  addProgressItem("Task completion", `${progress.taskCompletionPercentage}%`);
+  addProgressItem("Tasks", `${progress.completedTasks} complete out of ${progress.totalTasks}`);
+  addProgressItem("Approved tasks", `${progress.approvedTasks}`);
+  addProgressItem("Suggested tasks", `${progress.suggestedTasks}`);
+  addProgressItem("Study sessions", `${progress.completedSessions} complete out of ${progress.totalSessions}`);
+  addProgressItem("Active sessions", `${progress.activeSessions}`);
+  addProgressItem("Total study time", formatDuration(progress.totalStudySeconds));
+}
+
+function addProgressItem(label, value) {
+  const paragraph = document.createElement("p");
+  const labelElement = document.createElement("strong");
+
+  labelElement.textContent = `${label}: `;
+  paragraph.appendChild(labelElement);
+  paragraph.append(value);
+
+  progressSummary.appendChild(paragraph);
 }
 
 async function loadAssignments() {
@@ -107,55 +157,6 @@ async function loadAssignmentDetail(assignmentId) {
     return;
   }
 
-  function formatDuration(seconds) {
-  const totalSeconds = Number(seconds || 0);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const remainingSeconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${remainingSeconds}s`;
-  }
-
-  if (minutes > 0) {
-    return `${minutes}m ${remainingSeconds}s`;
-  }
-
-  return `${remainingSeconds}s`;
-}
-
-async function loadProgress(assignmentId) {
-  const response = await apiFetch(`/api/assignments/${assignmentId}/progress`);
-
-  if (!response.ok) {
-    show(`${response.status} ${response.statusText}\n${await response.text()}`);
-    return;
-  }
-
-  const progress = await response.json();
-
-  progressSummary.replaceChildren();
-
-  addProgressItem("Task completion", `${progress.taskCompletionPercentage}%`);
-  addProgressItem("Tasks", `${progress.completedTasks} complete out of ${progress.totalTasks}`);
-  addProgressItem("Approved tasks", `${progress.approvedTasks}`);
-  addProgressItem("Suggested tasks", `${progress.suggestedTasks}`);
-  addProgressItem("Study sessions", `${progress.completedSessions} complete out of ${progress.totalSessions}`);
-  addProgressItem("Active sessions", `${progress.activeSessions}`);
-  addProgressItem("Total study time", formatDuration(progress.totalStudySeconds));
-}
-
-function addProgressItem(label, value) {
-  const paragraph = document.createElement("p");
-  const labelElement = document.createElement("strong");
-
-  labelElement.textContent = `${label}: `;
-  paragraph.appendChild(labelElement);
-  paragraph.append(value);
-
-  progressSummary.appendChild(paragraph);
-}
-
 
   const assignment = await response.json();
   selectedAssignmentId = assignment.assignmentId;
@@ -180,6 +181,7 @@ function addProgressItem(label, value) {
   await loadRequirements(selectedAssignmentId);
   await loadTasks(selectedAssignmentId);
   await loadStudySessions(selectedAssignmentId);
+  await loadStudyHistory(selectedAssignmentId);
 }
 
 async function loadRequirements(assignmentId) {
@@ -478,6 +480,85 @@ async function completeStudySession(sessionId) {
 
   await loadStudySessions(selectedAssignmentId);
   show("Study session completed.");
+}
+
+async function loadStudyHistory(assignmentId) {
+  const sessionsResponse = await apiFetch(`/api/assignments/${assignmentId}/study-sessions`);
+
+  if (!sessionsResponse.ok) {
+    show(`${sessionsResponse.status} ${sessionsResponse.statusText}\n${await sessionsResponse.text()}`);
+    return;
+  }
+
+  const tasksResponse = await apiFetch(`/api/assignments/${assignmentId}/tasks`);
+
+  if (!tasksResponse.ok) {
+    show(`${tasksResponse.status} ${tasksResponse.statusText}\n${await tasksResponse.text()}`);
+    return;
+  }
+
+  const sessions = await sessionsResponse.json();
+  const tasks = await tasksResponse.json();
+
+  studyHistory.replaceChildren();
+
+  if (sessions.length === 0) {
+    studyHistory.textContent = "No study history yet.";
+    return;
+  }
+
+  for (const session of sessions) {
+    const sessionBlock = document.createElement("div");
+    const heading = document.createElement("h4");
+
+    heading.textContent = `${session.sessionDate} - ${session.sessionName || "Study session"}`;
+    sessionBlock.appendChild(heading);
+
+    addHistoryItem(sessionBlock, "Status", `${session.sessionStatus}, ${session.timerStatus}`);
+    addHistoryItem(sessionBlock, "Duration", formatDuration(session.durationSeconds));
+
+    if (session.sessionGoal) {
+      addHistoryItem(sessionBlock, "Goal", session.sessionGoal);
+    }
+
+    if (session.sessionNotes) {
+      addHistoryItem(sessionBlock, "Notes", session.sessionNotes);
+    }
+
+    const linkedTasks = await loadSessionTasks(assignmentId, session.sessionId);
+
+    if (linkedTasks.length > 0) {
+      const taskList = document.createElement("ul");
+
+      for (const sessionTask of linkedTasks) {
+        const task = tasks.find(task => task.taskId === sessionTask.taskId);
+        const taskItem = document.createElement("li");
+
+        taskItem.textContent = task ? task.taskTitle : sessionTask.taskId;
+
+        if (sessionTask.outcome) {
+          taskItem.textContent += ` - Outcome: ${sessionTask.outcome}`;
+        }
+
+        taskList.appendChild(taskItem);
+      }
+
+      sessionBlock.appendChild(taskList);
+    }
+
+    studyHistory.appendChild(sessionBlock);
+  }
+}
+
+function addHistoryItem(container, label, value) {
+  const paragraph = document.createElement("p");
+  const labelElement = document.createElement("strong");
+
+  labelElement.textContent = `${label}: `;
+  paragraph.appendChild(labelElement);
+  paragraph.append(value || "");
+
+  container.appendChild(paragraph);
 }
 
 async function loadSessionTasks(assignmentId, sessionId) {
