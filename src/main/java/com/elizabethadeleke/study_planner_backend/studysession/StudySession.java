@@ -87,7 +87,7 @@ public class StudySession {
     public String getSessionStatus() { return sessionStatus; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
-    
+
         public void setStartTime(OffsetDateTime startTime) {
         this.startTime = startTime;
     }
@@ -107,4 +107,8 @@ public class StudySession {
     public void setSessionStatus(String sessionStatus) {
         this.sessionStatus = sessionStatus;
     }
+    
+    public void setSessionNotes(String sessionNotes) {
+    this.sessionNotes = sessionNotes;
+}
 }

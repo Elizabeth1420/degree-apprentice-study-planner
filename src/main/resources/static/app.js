@@ -303,6 +303,17 @@ async function loadStudySessions(assignmentId) {
 
       linkedItem.textContent = linkedTask ? linkedTask.taskTitle : sessionTask.taskId;
 
+      const outcomeInput = document.createElement("textarea");
+      outcomeInput.placeholder = "Task outcome";
+      outcomeInput.value = sessionTask.outcome || "";
+
+      const saveOutcomeButton = document.createElement("button");
+      saveOutcomeButton.type = "button";
+      saveOutcomeButton.textContent = "Save outcome";
+      saveOutcomeButton.addEventListener("click", () => {
+        saveTaskOutcome(session.sessionId, sessionTask.taskId, outcomeInput.value);
+      });
+
       const removeButton = document.createElement("button");
       removeButton.type = "button";
       removeButton.textContent = "Remove";
@@ -310,6 +321,8 @@ async function loadStudySessions(assignmentId) {
       removeButton.addEventListener("click", () => removeTaskFromStudySession(session.sessionId, sessionTask.taskId));
 
       linkedItem.append(" ");
+      linkedItem.appendChild(outcomeInput);
+      linkedItem.appendChild(saveOutcomeButton);
       linkedItem.appendChild(removeButton);
       sessionTaskList.appendChild(linkedItem);
     }
@@ -339,9 +352,22 @@ async function loadStudySessions(assignmentId) {
       }
     });
 
+    const notesInput = document.createElement("textarea");
+    notesInput.placeholder = "Session notes";
+    notesInput.value = session.sessionNotes || "";
+
+    const saveNotesButton = document.createElement("button");
+    saveNotesButton.type = "button";
+    saveNotesButton.textContent = "Save notes";
+    saveNotesButton.addEventListener("click", () => {
+      saveStudySessionNotes(session.sessionId, notesInput.value);
+    });
+
     item.appendChild(sessionTaskList);
     item.appendChild(taskSelect);
     item.appendChild(addTaskButton);
+    item.appendChild(notesInput);
+    item.appendChild(saveNotesButton);
 
     studySessionList.appendChild(item);
   }
@@ -441,6 +467,47 @@ async function removeTaskFromStudySession(sessionId, taskId) {
   await loadStudySessions(selectedAssignmentId);
   show("Task removed from study session.");
 }
+
+async function saveStudySessionNotes(sessionId, sessionNotes) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/notes`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      sessionNotes
+    })
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadStudySessions(selectedAssignmentId);
+  show("Study session notes saved.");
+}
+
+async function saveTaskOutcome(sessionId, taskId, outcome) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/tasks/${taskId}/outcome`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      outcome
+    })
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadStudySessions(selectedAssignmentId);
+  show("Task outcome saved.");
+}
+
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();

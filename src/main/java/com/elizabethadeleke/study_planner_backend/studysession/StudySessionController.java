@@ -87,9 +87,23 @@ public class StudySessionController {
         return studySessionService.completeSession(userId, assignmentId, sessionId);
     }
 
+    @PatchMapping("/api/assignments/{assignmentId}/study-sessions/{sessionId}/notes")
+    public StudySession updateSessionNotes(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID sessionId,
+            @RequestBody UpdateSessionNotesRequest request) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return studySessionService.updateSessionNotes(userId, assignmentId, sessionId, request.sessionNotes());
+    }
+
     public record CreateStudySessionRequest(
             String sessionName,
             LocalDate sessionDate,
             String sessionGoal) {
     }
+
+    public record UpdateSessionNotesRequest(String sessionNotes) {
+}
 }

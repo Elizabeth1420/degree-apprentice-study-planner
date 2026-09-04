@@ -138,6 +138,13 @@ public class StudySessionService {
         return studySessionRepository.save(session);
     }
 
+    @Transactional
+    public StudySession updateSessionNotes(UUID userId, UUID assignmentId, UUID sessionId, String sessionNotes) {
+        StudySession session = getSessionForAssignment(userId, assignmentId, sessionId);
+        session.setSessionNotes(sessionNotes);
+        return studySessionRepository.save(session);
+    }
+
         private int calculateDurationSeconds(StudySession session, OffsetDateTime finishedAt) {
         int existingDuration = session.getDurationSeconds() == null ? 0 : session.getDurationSeconds();
 
@@ -147,7 +154,7 @@ public class StudySessionService {
 
         return existingDuration + Math.toIntExact(Duration.between(session.getStartTime(), finishedAt).getSeconds());
     }
-    
+
     private StudySession getSessionForAssignment(UUID userId, UUID assignmentId, UUID sessionId) {
         assignmentService.getAssignment(userId, assignmentId);
 

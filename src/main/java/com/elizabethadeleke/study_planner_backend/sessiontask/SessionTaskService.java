@@ -53,6 +53,18 @@ public class SessionTaskService {
         sessionTaskRepository.deleteBySessionIdAndTaskId(sessionId, taskId);
     }
 
+    @Transactional
+    public SessionTask updateTaskOutcome(UUID userId, UUID assignmentId, UUID sessionId, UUID taskId, String outcome) {
+        validateSession(userId, assignmentId, sessionId);
+        validateTask(assignmentId, taskId);
+
+        SessionTask sessionTask = sessionTaskRepository.findBySessionIdAndTaskId(sessionId, taskId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session task link not found"));
+
+        sessionTask.setOutcome(outcome);
+        return sessionTaskRepository.save(sessionTask);
+    }
+
     private void validateSession(UUID userId, UUID assignmentId, UUID sessionId) {
         assignmentService.getAssignment(userId, assignmentId);
 
