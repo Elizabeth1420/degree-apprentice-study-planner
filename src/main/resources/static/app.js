@@ -22,6 +22,8 @@ const generateRequirementsButton = document.getElementById("generate-requirement
 const requirementsList = document.getElementById("requirements-list");
 const generateTasksButton = document.getElementById("generate-tasks-button");
 const tasksList = document.getElementById("tasks-list");
+const studySessionForm = document.getElementById("study-session-form");
+const studySessionList = document.getElementById("study-session-list");
 
 let accessToken = null;
 let selectedAssignmentId = null;
@@ -222,6 +224,33 @@ async function completeTask(taskId) {
 
   await loadTasks(selectedAssignmentId);
   show("Task marked complete.");
+
+  await loadStudySessions(selectedAssignmentId);
+}
+
+async function loadStudySessions(assignmentId) {
+  const response = await apiFetch(`/api/assignments/${assignmentId}/study-sessions`);
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  const sessions = await response.json();
+  studySessionList.innerHTML = "";
+
+  if (sessions.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = "No study sessions planned yet.";
+    studySessionList.appendChild(item);
+    return;
+  }
+
+  for (const session of sessions) {
+    const item = document.createElement("li");
+    item.textContent = `${session.sessionDate} - ${session.sessionName || "Study session"} (${session.sessionStatus}, ${session.timerStatus})`;
+    studySessionList.appendChild(item);
+  }
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -284,6 +313,35 @@ assignmentForm.addEventListener("submit", async (event) => {
   show("Assignment created.");
   assignmentForm.reset();
   await loadAssignments();
+});
+
+studySessionForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      sessionName: document.getElementById("session-name").value || null,
+      sessionDate: document.getElementById("session-date").value,
+      sessionGoal: document.getElementById("session-goal").value || null
+    })
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  studySessionForm.reset();
+  await loadStudySessions(selectedAssignmentId);
+  show("Study session created.");
 });
 
 deleteAssignmentButton.addEventListener("click", async () => {
