@@ -14,9 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class AssignmentService {
 
     private final AssignmentRepository repository;
+    private final BriefAnalysisService briefAnalysisService;
 
-    public AssignmentService(AssignmentRepository repository) {
+    public AssignmentService(AssignmentRepository repository, BriefAnalysisService briefAnalysisService) {
         this.repository = repository;
+        this.briefAnalysisService = briefAnalysisService;
     }
 
     @Transactional(readOnly = true)
@@ -55,6 +57,7 @@ public class AssignmentService {
         assignment.setUploadedFileName(uploadedFileName);
         assignment.setUploadedFileType(uploadedFileType);
         assignment.setExtractedText(extractedText);
+        briefAnalysisService.populateAssignmentFields(assignment, extractedText);
         return repository.save(assignment);
     }
 
