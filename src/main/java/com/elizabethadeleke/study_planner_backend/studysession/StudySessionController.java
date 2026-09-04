@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -44,6 +45,26 @@ public class StudySessionController {
                 request.sessionName(),
                 request.sessionDate(),
                 request.sessionGoal());
+    }
+
+        @PatchMapping("/api/assignments/{assignmentId}/study-sessions/{sessionId}/start")
+    public StudySession startSession(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID sessionId) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return studySessionService.startSession(userId, assignmentId, sessionId);
+    }
+
+    @PatchMapping("/api/assignments/{assignmentId}/study-sessions/{sessionId}/stop")
+    public StudySession stopSession(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID sessionId) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return studySessionService.stopSession(userId, assignmentId, sessionId);
     }
 
     public record CreateStudySessionRequest(

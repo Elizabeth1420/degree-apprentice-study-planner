@@ -128,6 +128,7 @@ async function loadAssignmentDetail(assignmentId) {
   addDetail("Uploaded file type", assignment.uploadedFileType);
   await loadRequirements(selectedAssignmentId);
   await loadTasks(selectedAssignmentId);
+  await loadStudySessions(selectedAssignmentId);
 }
 
 async function loadRequirements(assignmentId) {
@@ -248,9 +249,55 @@ async function loadStudySessions(assignmentId) {
 
   for (const session of sessions) {
     const item = document.createElement("li");
-    item.textContent = `${session.sessionDate} - ${session.sessionName || "Study session"} (${session.sessionStatus}, ${session.timerStatus})`;
+
+    const text = document.createElement("span");
+    text.textContent = `${session.sessionDate} - ${session.sessionName || "Study session"} (${session.sessionStatus}, ${session.timerStatus}, ${session.durationSeconds || 0}s) `;
+
+    const startButton = document.createElement("button");
+    startButton.type = "button";
+    startButton.textContent = "Start";
+    startButton.disabled = session.timerStatus === "RUNNING" || session.sessionStatus === "COMPLETED";
+    startButton.addEventListener("click", () => startStudySession(session.sessionId));
+
+    const stopButton = document.createElement("button");
+    stopButton.type = "button";
+    stopButton.textContent = "Stop";
+    stopButton.disabled = session.timerStatus !== "RUNNING";
+    stopButton.addEventListener("click", () => stopStudySession(session.sessionId));
+
+    item.appendChild(text);
+    item.appendChild(startButton);
+    item.appendChild(stopButton);
     studySessionList.appendChild(item);
   }
+}
+
+async function startStudySession(sessionId) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/start`, {
+    method: "PATCH"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadStudySessions(selectedAssignmentId);
+  show("Study session started.");
+}
+
+async function stopStudySession(sessionId) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/stop`, {
+    method: "PATCH"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadStudySessions(selectedAssignmentId);
+  show("Study session stopped.");
 }
 
 loginForm.addEventListener("submit", async (event) => {

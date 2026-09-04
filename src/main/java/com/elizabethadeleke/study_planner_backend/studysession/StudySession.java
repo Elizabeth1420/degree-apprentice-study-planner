@@ -87,4 +87,24 @@ public class StudySession {
     public String getSessionStatus() { return sessionStatus; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    
+        public void setStartTime(OffsetDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setEndTime(OffsetDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public void setDurationSeconds(Integer durationSeconds) {
+        this.durationSeconds = durationSeconds;
+    }
+
+    public void setTimerStatus(String timerStatus) {
+        this.timerStatus = timerStatus;
+    }
+
+    public void setSessionStatus(String sessionStatus) {
+        this.sessionStatus = sessionStatus;
+    }
 }
