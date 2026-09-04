@@ -247,6 +247,15 @@ async function loadStudySessions(assignmentId) {
     return;
   }
 
+  const tasksResponse = await apiFetch(`/api/assignments/${assignmentId}/tasks`);
+
+  if (!tasksResponse.ok) {
+    show(`${tasksResponse.status} ${tasksResponse.statusText}\n${await tasksResponse.text()}`);
+    return;
+  }
+
+  const tasks = await tasksResponse.json();
+
   for (const session of sessions) {
     const item = document.createElement("li");
 
@@ -282,6 +291,58 @@ async function loadStudySessions(assignmentId) {
     item.appendChild(pauseButton);
     item.appendChild(resumeButton);
     item.appendChild(completeButton);
+
+    const linkedTasks = await loadSessionTasks(assignmentId, session.sessionId);
+    const linkedTaskIds = linkedTasks.map(sessionTask => sessionTask.taskId);
+
+    const sessionTaskList = document.createElement("ul");
+
+    for (const sessionTask of linkedTasks) {
+      const linkedTask = tasks.find(task => task.taskId === sessionTask.taskId);
+      const linkedItem = document.createElement("li");
+
+      linkedItem.textContent = linkedTask ? linkedTask.taskTitle : sessionTask.taskId;
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.textContent = "Remove";
+      removeButton.disabled = session.sessionStatus === "COMPLETED";
+      removeButton.addEventListener("click", () => removeTaskFromStudySession(session.sessionId, sessionTask.taskId));
+
+      linkedItem.append(" ");
+      linkedItem.appendChild(removeButton);
+      sessionTaskList.appendChild(linkedItem);
+    }
+
+    const availableTasks = tasks.filter(task => !linkedTaskIds.includes(task.taskId));
+
+    const taskSelect = document.createElement("select");
+    const placeholderOption = document.createElement("option");
+    placeholderOption.value = "";
+    placeholderOption.textContent = "Choose task";
+    taskSelect.appendChild(placeholderOption);
+
+    for (const task of availableTasks) {
+      const option = document.createElement("option");
+      option.value = task.taskId;
+      option.textContent = task.taskTitle;
+      taskSelect.appendChild(option);
+    }
+
+    const addTaskButton = document.createElement("button");
+    addTaskButton.type = "button";
+    addTaskButton.textContent = "Add task";
+    addTaskButton.disabled = availableTasks.length === 0 || session.sessionStatus === "COMPLETED";
+    addTaskButton.addEventListener("click", () => {
+      if (taskSelect.value) {
+        addTaskToStudySession(session.sessionId, taskSelect.value);
+      }
+    });
+
+    item.appendChild(sessionTaskList);
+    item.appendChild(taskSelect);
+    item.appendChild(addTaskButton);
+
     studySessionList.appendChild(item);
   }
 }
@@ -340,6 +401,45 @@ async function completeStudySession(sessionId) {
 
   await loadStudySessions(selectedAssignmentId);
   show("Study session completed.");
+}
+
+async function loadSessionTasks(assignmentId, sessionId) {
+  const response = await apiFetch(`/api/assignments/${assignmentId}/study-sessions/${sessionId}/tasks`);
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return [];
+  }
+
+  return response.json();
+}
+
+async function addTaskToStudySession(sessionId, taskId) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/tasks/${taskId}`, {
+    method: "POST"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadStudySessions(selectedAssignmentId);
+  show("Task added to study session.");
+}
+
+async function removeTaskFromStudySession(sessionId, taskId) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/tasks/${taskId}`, {
+    method: "DELETE"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadStudySessions(selectedAssignmentId);
+  show("Task removed from study session.");
 }
 
 loginForm.addEventListener("submit", async (event) => {
