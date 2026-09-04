@@ -16,6 +16,8 @@ const assignmentDetail = document.getElementById("assignment-detail");
 const deleteAssignmentButton = document.getElementById("delete-assignment-button");
 const briefTextInput = document.getElementById("brief-text");
 const saveBriefTextButton = document.getElementById("save-brief-text-button");
+const briefFileInput = document.getElementById("brief-file");
+const uploadBriefFileButton = document.getElementById("upload-brief-file-button");
 
 let accessToken = null;
 let selectedAssignmentId = null;
@@ -115,6 +117,8 @@ async function loadAssignmentDetail(assignmentId) {
   addDetail("Learning outcomes / KSBs", assignment.learningOutcomesKsbs);
   addDetail("Referencing guidance", assignment.referencingGuidance);
   addDetail("Personal assignment goal", assignment.personalAssignmentGoal);
+  addDetail("Uploaded file", assignment.uploadedFileName);
+  addDetail("Uploaded file type", assignment.uploadedFileType);
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -229,6 +233,36 @@ saveBriefTextButton.addEventListener("click", async () => {
 
   await loadAssignmentDetail(selectedAssignmentId);
   show("Brief text saved.");
+});
+
+uploadBriefFileButton.addEventListener("click", async () => {
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  const file = briefFileInput.files[0];
+
+  if (!file) {
+    show("Choose a file first.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/brief-file`, {
+    method: "POST",
+    body: formData
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  briefFileInput.value = "";
+  await loadAssignmentDetail(selectedAssignmentId);
+  show("Brief file uploaded.");
 });
 
 loadAssignmentsButton.addEventListener("click", loadAssignments);

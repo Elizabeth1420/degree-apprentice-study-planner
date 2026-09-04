@@ -71,6 +71,12 @@ public class Assignment {
     @Column(name = "extracted_text", columnDefinition = "text")
     private String extractedText;
 
+    @Column(name = "uploaded_file_name")
+    private String uploadedFileName;
+
+    @Column(name = "uploaded_file_type")
+    private String uploadedFileType;
+
     protected Assignment() {
     }
 
@@ -114,4 +120,8 @@ public class Assignment {
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public String getExtractedText() { return extractedText; }
     public void setExtractedText(String extractedText) { this.extractedText = extractedText; }
+    public String getUploadedFileName() { return uploadedFileName; }
+    public void setUploadedFileName(String uploadedFileName) { this.uploadedFileName = uploadedFileName; }
+    public String getUploadedFileType() { return uploadedFileType; }
+    public void setUploadedFileType(String uploadedFileType) { this.uploadedFileType = uploadedFileType; }
 }

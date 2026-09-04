@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 public class AssignmentController {
@@ -53,6 +56,20 @@ public class AssignmentController {
 
         UUID userId = UUID.fromString(jwt.getSubject());
         return assignmentService.updateBriefText(userId, assignmentId, request.extractedText());
+    }
+
+    @PostMapping(value = "/api/assignments/{assignmentId}/brief-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Assignment uploadBriefFile(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @RequestParam("file") MultipartFile file) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return assignmentService.updateBriefFile(
+                userId,
+                assignmentId,
+                file.getOriginalFilename(),
+                file.getContentType());
     }
 
     @PostMapping("/api/assignments")

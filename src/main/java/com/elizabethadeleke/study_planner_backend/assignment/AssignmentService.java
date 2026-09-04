@@ -44,6 +44,15 @@ public class AssignmentService {
     }
 
     @Transactional
+    public Assignment updateBriefFile(UUID userId, UUID assignmentId, String uploadedFileName,
+            String uploadedFileType) {
+        Assignment assignment = getAssignment(userId, assignmentId);
+        assignment.setUploadedFileName(uploadedFileName);
+        assignment.setUploadedFileType(uploadedFileType);
+        return repository.save(assignment);
+    }
+
+    @Transactional
     public Assignment createAssignment(
             UUID userId,
             String moduleCode,
