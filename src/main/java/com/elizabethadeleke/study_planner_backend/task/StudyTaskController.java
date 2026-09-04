@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,5 +36,25 @@ public class StudyTaskController {
 
         UUID userId = UUID.fromString(jwt.getSubject());
         return studyTaskService.generateTasks(userId, assignmentId);
+    }
+
+        @PatchMapping("/api/assignments/{assignmentId}/tasks/{taskId}/approve")
+    public StudyTask approveTask(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID taskId) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return studyTaskService.approveTask(userId, assignmentId, taskId);
+    }
+
+    @PatchMapping("/api/assignments/{assignmentId}/tasks/{taskId}/complete")
+    public StudyTask completeTask(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID taskId) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return studyTaskService.completeTask(userId, assignmentId, taskId);
     }
 }

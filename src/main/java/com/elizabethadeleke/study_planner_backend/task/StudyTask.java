@@ -67,4 +67,12 @@ public class StudyTask {
     public String getOrigin() { return origin; }
     public String getSourcePassage() { return sourcePassage; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+
+    public void setTaskStatus(String taskStatus) {
+        this.taskStatus = taskStatus;
+    }
+
+    public void setApprovalStatus(String approvalStatus) {
+        this.approvalStatus = approvalStatus;
+    }
 }

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,8 @@ import com.elizabethadeleke.study_planner_backend.requirement.RequirementService
 public class StudyTaskService {
 
     private static final String AI = "AI";
+    private static final String APPROVED = "APPROVED";
+    private static final String COMPLETE = "COMPLETE";
 
     private final StudyTaskRepository studyTaskRepository;
     private final AssignmentService assignmentService;
@@ -38,6 +42,13 @@ public class StudyTaskService {
     @Transactional
     public List<StudyTask> generateTasks(UUID userId, UUID assignmentId) {
         assignmentService.getAssignment(userId, assignmentId);
+
+        List<StudyTask> existingTasks = studyTaskRepository.findByAssignmentIdOrderByCreatedAtAsc(assignmentId);
+
+        if (!existingTasks.isEmpty()) {
+            return existingTasks;
+        }
+
         List<Requirement> requirements = requirementService.listRequirements(userId, assignmentId);
 
         studyTaskRepository.deleteByAssignmentIdAndOrigin(assignmentId, AI);
@@ -54,6 +65,27 @@ public class StudyTaskService {
         }
 
         return studyTaskRepository.saveAll(tasks);
+    }
+
+        @Transactional
+    public StudyTask approveTask(UUID userId, UUID assignmentId, UUID taskId) {
+        StudyTask task = getTaskForAssignment(userId, assignmentId, taskId);
+        task.setApprovalStatus(APPROVED);
+        return studyTaskRepository.save(task);
+    }
+
+    @Transactional
+    public StudyTask completeTask(UUID userId, UUID assignmentId, UUID taskId) {
+        StudyTask task = getTaskForAssignment(userId, assignmentId, taskId);
+        task.setTaskStatus(COMPLETE);
+        return studyTaskRepository.save(task);
+    }
+
+    private StudyTask getTaskForAssignment(UUID userId, UUID assignmentId, UUID taskId) {
+        assignmentService.getAssignment(userId, assignmentId);
+
+        return studyTaskRepository.findByTaskIdAndAssignmentId(taskId, assignmentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
     }
 
     private String buildTaskTitle(Requirement requirement) {

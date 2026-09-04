@@ -173,9 +173,55 @@ async function loadTasks(assignmentId) {
 
   for (const task of tasks) {
     const item = document.createElement("li");
-    item.textContent = `${task.taskTitle} - ${task.taskStatus} (${task.approvalStatus})`;
+
+    const text = document.createElement("span");
+    text.textContent = `${task.taskTitle} - ${task.taskStatus} (${task.approvalStatus}) `;
+
+    const approveButton = document.createElement("button");
+    approveButton.type = "button";
+    approveButton.textContent = "Approve";
+    approveButton.disabled = task.approvalStatus === "APPROVED";
+    approveButton.addEventListener("click", () => approveTask(task.taskId));
+
+    const completeButton = document.createElement("button");
+    completeButton.type = "button";
+    completeButton.textContent = "Mark complete";
+    completeButton.disabled = task.taskStatus === "COMPLETE";
+    completeButton.addEventListener("click", () => completeTask(task.taskId));
+
+    item.appendChild(text);
+    item.appendChild(approveButton);
+    item.appendChild(completeButton);
     tasksList.appendChild(item);
   }
+}
+
+async function approveTask(taskId) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/tasks/${taskId}/approve`, {
+    method: "PATCH"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadTasks(selectedAssignmentId);
+  show("Task approved.");
+}
+
+async function completeTask(taskId) {
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/tasks/${taskId}/complete`, {
+    method: "PATCH"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadTasks(selectedAssignmentId);
+  show("Task marked complete.");
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -355,7 +401,7 @@ generateTasksButton.addEventListener("click", async () => {
   }
 
   await loadTasks(selectedAssignmentId);
-  show("Tasks generated.");
+  show("Tasks loaded or generated.");
 });
 
 loadAssignmentsButton.addEventListener("click", loadAssignments);
