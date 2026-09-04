@@ -251,6 +251,15 @@ async function loadTasks(assignmentId) {
     item.appendChild(text);
     item.appendChild(approveButton);
     item.appendChild(completeButton);
+
+    if (task.origin === "STUDENT") {
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.textContent = "Delete manual task";
+      deleteButton.addEventListener("click", () => deleteManualTask(task.taskId));
+      item.appendChild(deleteButton);
+    }
+
     tasksList.appendChild(item);
   }
 }
@@ -308,6 +317,29 @@ async function createManualTask(taskTitle, taskDescription) {
   await loadStudyHistory(selectedAssignmentId);
   await loadProgress(selectedAssignmentId);
   show("Manual task added.");
+}
+
+async function deleteManualTask(taskId) {
+  const confirmed = window.confirm("Delete this manual task?");
+
+  if (!confirmed) {
+    return;
+  }
+
+  const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/tasks/${taskId}`, {
+    method: "DELETE"
+  });
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  await loadTasks(selectedAssignmentId);
+  await loadStudySessions(selectedAssignmentId);
+  await loadStudyHistory(selectedAssignmentId);
+  await loadProgress(selectedAssignmentId);
+  show("Manual task deleted.");
 }
 
 async function loadStudySessions(assignmentId) {

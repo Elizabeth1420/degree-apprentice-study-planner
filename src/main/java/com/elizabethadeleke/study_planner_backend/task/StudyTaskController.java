@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -72,6 +73,16 @@ public class StudyTaskController {
 
         UUID userId = UUID.fromString(jwt.getSubject());
         return studyTaskService.completeTask(userId, assignmentId, taskId);
+    }
+
+    @DeleteMapping("/api/assignments/{assignmentId}/tasks/{taskId}")
+    public void deleteManualTask(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID taskId) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+        studyTaskService.deleteManualTask(userId, assignmentId, taskId);
     }
 
     public record CreateManualTaskRequest(

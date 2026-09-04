@@ -1,4 +1,5 @@
 package com.elizabethadeleke.study_planner_backend.task;
+import com.elizabethadeleke.study_planner_backend.sessiontask.SessionTaskRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,15 +25,18 @@ public class StudyTaskService {
     private final StudyTaskRepository studyTaskRepository;
     private final AssignmentService assignmentService;
     private final RequirementService requirementService;
+    private final SessionTaskRepository sessionTaskRepository;
 
     public StudyTaskService(
-            StudyTaskRepository studyTaskRepository,
-            AssignmentService assignmentService,
-            RequirementService requirementService) {
-        this.studyTaskRepository = studyTaskRepository;
-        this.assignmentService = assignmentService;
-        this.requirementService = requirementService;
-    }
+        StudyTaskRepository studyTaskRepository,
+        AssignmentService assignmentService,
+        RequirementService requirementService,
+        SessionTaskRepository sessionTaskRepository) {
+    this.studyTaskRepository = studyTaskRepository;
+    this.assignmentService = assignmentService;
+    this.requirementService = requirementService;
+    this.sessionTaskRepository = sessionTaskRepository;
+}
 
     @Transactional(readOnly = true)
     public List<StudyTask> listTasks(UUID userId, UUID assignmentId) {
@@ -106,6 +110,18 @@ public class StudyTaskService {
         StudyTask task = getTaskForAssignment(userId, assignmentId, taskId);
         task.setTaskStatus(COMPLETE);
         return studyTaskRepository.save(task);
+    }
+
+    @Transactional
+    public void deleteManualTask(UUID userId, UUID assignmentId, UUID taskId) {
+        StudyTask task = getTaskForAssignment(userId, assignmentId, taskId);
+
+        if (!STUDENT.equals(task.getOrigin())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only manual tasks can be deleted");
+        }
+
+        sessionTaskRepository.deleteByTaskId(taskId);
+        studyTaskRepository.delete(task);
     }
 
     private StudyTask getTaskForAssignment(UUID userId, UUID assignmentId, UUID taskId) {
