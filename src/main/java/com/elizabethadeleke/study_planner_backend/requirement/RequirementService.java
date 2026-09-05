@@ -9,16 +9,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.elizabethadeleke.study_planner_backend.assignment.Assignment;
 import com.elizabethadeleke.study_planner_backend.assignment.AssignmentService;
+import com.elizabethadeleke.study_planner_backend.analysis.AssignmentAnalysisService;
+import com.elizabethadeleke.study_planner_backend.analysis.RequirementSuggestion;
 
 @Service
 public class RequirementService {
 
     private final RequirementRepository requirementRepository;
     private final AssignmentService assignmentService;
+    private final AssignmentAnalysisService assignmentAnalysisService;
 
-    public RequirementService(RequirementRepository requirementRepository, AssignmentService assignmentService) {
+    public RequirementService(
+            RequirementRepository requirementRepository,
+            AssignmentService assignmentService,
+            AssignmentAnalysisService assignmentAnalysisService) {
         this.requirementRepository = requirementRepository;
         this.assignmentService = assignmentService;
+        this.assignmentAnalysisService = assignmentAnalysisService;
     }
 
     @Transactional(readOnly = true)
@@ -35,10 +42,15 @@ public class RequirementService {
 
         List<Requirement> requirements = new ArrayList<>();
 
-        addRequirement(requirements, assignmentId, "Complete the assignment task", assignment.getAssignmentTask(), "Assignment task");
-        addRequirement(requirements, assignmentId, "Meet the assessment criteria", assignment.getAssessmentCriteria(), "Assessment criteria");
-        addRequirement(requirements, assignmentId, "Address the learning outcomes and KSBs", assignment.getLearningOutcomesKsbs(), "Learning outcomes / KSBs");
-        addRequirement(requirements, assignmentId, "Follow the referencing guidance", assignment.getReferencingGuidance(), "Referencing guidance");
+        for (RequirementSuggestion suggestion : assignmentAnalysisService.analyseAssignment(assignment)
+                .requirements()) {
+            addRequirement(
+                    requirements,
+                    assignmentId,
+                    suggestion.requirementText(),
+                    suggestion.sourcePassage(),
+                    suggestion.sourceSection());
+        }
 
         return requirementRepository.saveAll(requirements);
     }

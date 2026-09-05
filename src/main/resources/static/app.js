@@ -29,6 +29,7 @@ const manualTaskDescriptionInput = document.getElementById("manual-task-descript
 const studySessionForm = document.getElementById("study-session-form");
 const studySessionList = document.getElementById("study-session-list");
 const progressSummary = document.getElementById("progress-summary");
+const successChecklist = document.getElementById("success-checklist");
 const studyHistory = document.getElementById("study-history");
 
 let accessToken = null;
@@ -112,6 +113,31 @@ function addProgressItem(label, value) {
   progressSummary.appendChild(paragraph);
 }
 
+async function loadSuccessChecklist(assignmentId) {
+  const response = await apiFetch(`/api/assignments/${assignmentId}/analysis/success-checklist`);
+
+  if (!response.ok) {
+    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    return;
+  }
+
+  const checklistItems = await response.json();
+  successChecklist.replaceChildren();
+
+  if (checklistItems.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = "No success checklist available yet.";
+    successChecklist.appendChild(item);
+    return;
+  }
+
+  for (const checklistItem of checklistItems) {
+    const item = document.createElement("li");
+    item.textContent = checklistItem;
+    successChecklist.appendChild(item);
+  }
+}
+
 async function loadAssignments() {
   const response = await apiFetch("/api/assignments");
 
@@ -184,6 +210,7 @@ async function loadAssignmentDetail(assignmentId) {
   addDetail("Uploaded file", assignment.uploadedFileName);
   addDetail("Uploaded file type", assignment.uploadedFileType);
   await loadProgress(selectedAssignmentId);
+  await loadSuccessChecklist(selectedAssignmentId);
   await loadRequirements(selectedAssignmentId);
   await loadTasks(selectedAssignmentId);
   await loadStudySessions(selectedAssignmentId);

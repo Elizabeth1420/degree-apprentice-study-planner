@@ -1,4 +1,5 @@
 package com.elizabethadeleke.study_planner_backend.task;
+
 import com.elizabethadeleke.study_planner_backend.sessiontask.SessionTaskRepository;
 
 import java.util.ArrayList;
@@ -10,7 +11,10 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.elizabethadeleke.study_planner_backend.assignment.Assignment;
 import com.elizabethadeleke.study_planner_backend.assignment.AssignmentService;
+import com.elizabethadeleke.study_planner_backend.analysis.AssignmentAnalysisService;
+import com.elizabethadeleke.study_planner_backend.analysis.TaskSuggestion;
 import com.elizabethadeleke.study_planner_backend.requirement.Requirement;
 import com.elizabethadeleke.study_planner_backend.requirement.RequirementService;
 
@@ -28,17 +32,20 @@ public class StudyTaskService {
     private final AssignmentService assignmentService;
     private final RequirementService requirementService;
     private final SessionTaskRepository sessionTaskRepository;
+    private final AssignmentAnalysisService assignmentAnalysisService;
 
     public StudyTaskService(
-        StudyTaskRepository studyTaskRepository,
-        AssignmentService assignmentService,
-        RequirementService requirementService,
-        SessionTaskRepository sessionTaskRepository) {
-    this.studyTaskRepository = studyTaskRepository;
-    this.assignmentService = assignmentService;
-    this.requirementService = requirementService;
-    this.sessionTaskRepository = sessionTaskRepository;
-}
+            StudyTaskRepository studyTaskRepository,
+            AssignmentService assignmentService,
+            RequirementService requirementService,
+            SessionTaskRepository sessionTaskRepository,
+            AssignmentAnalysisService assignmentAnalysisService) {
+        this.studyTaskRepository = studyTaskRepository;
+        this.assignmentService = assignmentService;
+        this.requirementService = requirementService;
+        this.sessionTaskRepository = sessionTaskRepository;
+        this.assignmentAnalysisService = assignmentAnalysisService;
+    }
 
     @Transactional(readOnly = true)
     public List<StudyTask> listTasks(UUID userId, UUID assignmentId) {
@@ -48,7 +55,7 @@ public class StudyTaskService {
 
     @Transactional
     public List<StudyTask> generateTasks(UUID userId, UUID assignmentId) {
-        assignmentService.getAssignment(userId, assignmentId);
+        Assignment assignment = assignmentService.getAssignment(userId, assignmentId);
 
         List<StudyTask> existingTasks = studyTaskRepository.findByAssignmentIdOrderByCreatedAtAsc(assignmentId);
 
@@ -62,13 +69,18 @@ public class StudyTaskService {
 
         List<StudyTask> tasks = new ArrayList<>();
 
-        for (Requirement requirement : requirements) {
+        for (TaskSuggestion suggestion : assignmentAnalysisService.analyseAssignment(assignment).tasks()) {
+            Requirement matchingRequirement = requirements.stream()
+                    .filter(requirement -> requirement.getSourceSection().equals(suggestion.sourceSection()))
+                    .findFirst()
+                    .orElse(null);
+
             tasks.add(new StudyTask(
                     assignmentId,
-                    requirement.getRequirementId(),
-                    buildTaskTitle(requirement),
-                    requirement.getSourcePassage(),
-                    requirement.getSourcePassage()));
+                    matchingRequirement == null ? null : matchingRequirement.getRequirementId(),
+                    suggestion.taskTitle(),
+                    suggestion.taskDescription(),
+                    suggestion.sourcePassage()));
         }
 
         return studyTaskRepository.saveAll(tasks);
@@ -76,31 +88,31 @@ public class StudyTaskService {
 
     @Transactional
     public StudyTask createManualTask(
-        UUID userId,
-        UUID assignmentId,
-        String taskTitle,
-        String taskDescription) {
+            UUID userId,
+            UUID assignmentId,
+            String taskTitle,
+            String taskDescription) {
 
-    assignmentService.getAssignment(userId, assignmentId);
+        assignmentService.getAssignment(userId, assignmentId);
 
-    if (taskTitle == null || taskTitle.isBlank()) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task title is required");
+        if (taskTitle == null || taskTitle.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task title is required");
+        }
+
+        StudyTask task = new StudyTask(
+                assignmentId,
+                null,
+                taskTitle.trim(),
+                taskDescription == null || taskDescription.isBlank() ? null : taskDescription.trim(),
+                null);
+
+        task.setOrigin(STUDENT);
+        task.setApprovalStatus(APPROVED);
+
+        return studyTaskRepository.save(task);
     }
 
-    StudyTask task = new StudyTask(
-            assignmentId,
-            null,
-            taskTitle.trim(),
-            taskDescription == null || taskDescription.isBlank() ? null : taskDescription.trim(),
-            null);
-
-    task.setOrigin(STUDENT);
-    task.setApprovalStatus(APPROVED);
-
-    return studyTaskRepository.save(task);
-}
-
-        @Transactional
+    @Transactional
     public StudyTask approveTask(UUID userId, UUID assignmentId, UUID taskId) {
         StudyTask task = getTaskForAssignment(userId, assignmentId, taskId);
         task.setApprovalStatus(APPROVED);
@@ -151,13 +163,5 @@ public class StudyTaskService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
     }
 
-    private String buildTaskTitle(Requirement requirement) {
-        return switch (requirement.getSourceSection()) {
-            case "Assignment task" -> "Break down the assignment task";
-            case "Assessment criteria" -> "Map work against the assessment criteria";
-            case "Learning outcomes / KSBs" -> "Evidence the learning outcomes and KSBs";
-            case "Referencing guidance" -> "Check referencing requirements";
-            default -> requirement.getRequirementText();
-        };
-    }
+
 }
