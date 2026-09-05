@@ -459,6 +459,22 @@ async function loadStudySessions(assignmentId) {
 
       linkedItem.textContent = linkedTask ? linkedTask.taskTitle : sessionTask.taskId;
 
+      const outcomeStatusSelect = document.createElement("select");
+
+      const emptyOutcomeOption = document.createElement("option");
+      emptyOutcomeOption.value = "";
+      emptyOutcomeOption.textContent = "Choose outcome";
+      outcomeStatusSelect.appendChild(emptyOutcomeOption);
+
+      for (const status of ["COMPLETE", "PARTIAL", "INCOMPLETE"]) {
+        const option = document.createElement("option");
+        option.value = status;
+        option.textContent = status;
+        outcomeStatusSelect.appendChild(option);
+      }
+
+      outcomeStatusSelect.value = sessionTask.outcomeStatus || "";
+
       const outcomeInput = document.createElement("textarea");
       outcomeInput.placeholder = "Task outcome";
       outcomeInput.value = sessionTask.outcome || "";
@@ -467,7 +483,12 @@ async function loadStudySessions(assignmentId) {
       saveOutcomeButton.type = "button";
       saveOutcomeButton.textContent = "Save outcome";
       saveOutcomeButton.addEventListener("click", () => {
-        saveTaskOutcome(session.sessionId, sessionTask.taskId, outcomeInput.value);
+        saveTaskOutcome(
+          session.sessionId,
+          sessionTask.taskId,
+          outcomeStatusSelect.value,
+          outcomeInput.value
+        );
       });
 
       const removeButton = document.createElement("button");
@@ -477,6 +498,7 @@ async function loadStudySessions(assignmentId) {
       removeButton.addEventListener("click", () => removeTaskFromStudySession(session.sessionId, sessionTask.taskId));
 
       linkedItem.append(" ");
+      linkedItem.appendChild(outcomeStatusSelect);
       linkedItem.appendChild(outcomeInput);
       linkedItem.appendChild(saveOutcomeButton);
       linkedItem.appendChild(removeButton);
@@ -485,9 +507,9 @@ async function loadStudySessions(assignmentId) {
 
     const availableTasks = tasks.filter(task =>
       !linkedTaskIds.includes(task.taskId) &&
-      task.approvalStatus === "APPROVED"
+      task.approvalStatus === "APPROVED" &&
+      task.taskStatus !== "COMPLETE"
     );
-
     const taskSelect = document.createElement("select");
     const placeholderOption = document.createElement("option");
     placeholderOption.value = "";
@@ -728,13 +750,14 @@ async function saveStudySessionNotes(sessionId, sessionNotes) {
   show("Study session notes saved.");
 }
 
-async function saveTaskOutcome(sessionId, taskId, outcome) {
+async function saveTaskOutcome(sessionId, taskId, outcomeStatus, outcome) {
   const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/tasks/${taskId}/outcome`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
+      outcomeStatus,
       outcome
     })
   });
@@ -744,7 +767,10 @@ async function saveTaskOutcome(sessionId, taskId, outcome) {
     return;
   }
 
+  await loadTasks(selectedAssignmentId);
   await loadStudySessions(selectedAssignmentId);
+  await loadStudyHistory(selectedAssignmentId);
+  await loadProgress(selectedAssignmentId);
   show("Task outcome saved.");
 }
 

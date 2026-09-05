@@ -63,9 +63,15 @@ public class SessionTaskController {
             @RequestBody UpdateTaskOutcomeRequest request) {
 
         UUID userId = UUID.fromString(jwt.getSubject());
-        return sessionTaskService.updateTaskOutcome(userId, assignmentId, sessionId, taskId, request.outcome());
+        return sessionTaskService.updateTaskOutcome(
+                userId,
+                assignmentId,
+                sessionId,
+                taskId,
+                request.outcomeStatus(),
+                request.outcome());
     }
 
-    public record UpdateTaskOutcomeRequest(String outcome) {
-}
+    public record UpdateTaskOutcomeRequest(String outcomeStatus, String outcome) {
+    }
 }

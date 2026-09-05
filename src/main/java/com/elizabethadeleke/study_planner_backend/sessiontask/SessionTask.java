@@ -27,6 +27,9 @@ public class SessionTask {
     @Column(name = "outcome", columnDefinition = "text")
     private String outcome;
 
+    @Column(name = "outcome_status")
+    private String outcomeStatus;
+
     protected SessionTask() {
     }
 
@@ -53,5 +56,13 @@ public class SessionTask {
 
     public void setOutcome(String outcome) {
         this.outcome = outcome;
+    }
+
+    public String getOutcomeStatus() {
+        return outcomeStatus;
+    }
+
+    public void setOutcomeStatus(String outcomeStatus) {
+        this.outcomeStatus = outcomeStatus;
     }
 }
