@@ -666,6 +666,10 @@ async function loadStudyHistory(assignmentId) {
 
         taskItem.textContent = task ? task.taskTitle : sessionTask.taskId;
 
+        if (sessionTask.outcomeStatus) {
+          taskItem.textContent += ` - ${sessionTask.outcomeStatus}`;
+        }
+
         if (sessionTask.outcome) {
           taskItem.textContent += ` - Outcome: ${sessionTask.outcome}`;
         }
