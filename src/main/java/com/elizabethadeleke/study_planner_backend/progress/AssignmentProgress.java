@@ -8,6 +8,7 @@ public record AssignmentProgress(
         int completedTasks,
         int approvedTasks,
         int suggestedTasks,
+        int rejectedTasks,
         int totalSessions,
         int plannedSessions,
         int activeSessions,

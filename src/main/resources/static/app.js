@@ -92,9 +92,10 @@ async function loadProgress(assignmentId) {
   progressSummary.replaceChildren();
 
   addProgressItem("Task completion", `${progress.taskCompletionPercentage}%`);
-  addProgressItem("Tasks", `${progress.completedTasks} complete out of ${progress.totalTasks}`);
+  addProgressItem("Approved task progress", `${progress.completedTasks} complete out of ${progress.totalTasks}`);
   addProgressItem("Approved tasks", `${progress.approvedTasks}`);
   addProgressItem("Suggested tasks", `${progress.suggestedTasks}`);
+  addProgressItem("Rejected tasks", `${progress.rejectedTasks}`);
   addProgressItem("Study sessions", `${progress.completedSessions} complete out of ${progress.totalSessions}`);
   addProgressItem("Active sessions", `${progress.activeSessions}`);
   addProgressItem("Total study time", formatDuration(progress.totalStudySeconds));

@@ -36,10 +36,15 @@ public class ProgressService {
         List<StudyTask> tasks = studyTaskRepository.findByAssignmentIdOrderByCreatedAtAsc(assignmentId);
         List<StudySession> sessions = studySessionRepository.findByAssignmentIdOrderBySessionDateAscCreatedAtAsc(assignmentId);
 
-        int totalTasks = tasks.size();
-        int completedTasks = countTasksByStatus(tasks, "COMPLETE");
-        int approvedTasks = countTasksByApproval(tasks, "APPROVED");
+        List<StudyTask> approvedTaskPool = tasks.stream()
+        .filter(task -> "APPROVED".equals(task.getApprovalStatus()))
+        .toList();
+
+        int totalTasks = approvedTaskPool.size();
+        int completedTasks = countTasksByStatus(approvedTaskPool, "COMPLETE");
+        int approvedTasks = approvedTaskPool.size();
         int suggestedTasks = countTasksByApproval(tasks, "SUGGESTED");
+        int rejectedTasks = countTasksByApproval(tasks, "REJECTED");
 
         int totalSessions = sessions.size();
         int plannedSessions = countSessionsByStatus(sessions, "PLANNED");
@@ -62,6 +67,7 @@ public class ProgressService {
                 completedTasks,
                 approvedTasks,
                 suggestedTasks,
+                rejectedTasks,
                 totalSessions,
                 plannedSessions,
                 activeSessions,
