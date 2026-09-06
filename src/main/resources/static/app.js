@@ -38,6 +38,14 @@ const assignmentDetailSection = document.getElementById("assignment-detail-secti
 const assignmentDetail = document.getElementById("assignment-detail");
 const primaryNavigation = document.querySelector(".primary-navigation");
 const backToAssignmentsButton = document.getElementById("back-to-assignments-button");
+const taskReviewSection = document.getElementById("task-review-section");
+const openTaskReviewButton = document.getElementById("open-task-review-button");
+const backToWorkspaceButton = document.getElementById("back-to-workspace-button");
+const refreshTaskReviewButton = document.getElementById("refresh-task-review-button");
+const taskReviewAssignmentTitle = document.getElementById("task-review-assignment-title");
+const taskReviewModule = document.getElementById("task-review-module");
+const taskReviewTabButtons = Array.from(document.querySelectorAll("[data-task-review-tab]"));
+const taskReviewTabPanels = Array.from(document.querySelectorAll("[data-task-review-panel]"));
 const workspaceAssignmentTitle = document.getElementById("workspace-assignment-title");
 const workspaceModule = document.getElementById("workspace-module");
 const workspaceStatus = document.getElementById("workspace-status");
@@ -156,11 +164,13 @@ function setApplicationView(view) {
   const showHome = view === "home";
   const showAssignments = view === "assignments";
   const showWorkspace = view === "workspace";
+  const showTaskReview = view === "task-review";
 
   homeSection.hidden = !showHome;
   assignmentsSection.hidden = !showAssignments;
   assignmentDetailSection.hidden = !showWorkspace;
-  primaryNavigation.hidden = showWorkspace;
+  taskReviewSection.hidden = !showTaskReview;
+  primaryNavigation.hidden = showWorkspace || showTaskReview;
 
   showHomeButton.classList.toggle("is-active", showHome);
   showAssignmentsButton.classList.toggle(
@@ -196,6 +206,26 @@ function setWorkspaceTab(tabName, moveFocus = false) {
   for (const panel of workspaceTabPanels) {
     panel.hidden =
       panel.dataset.workspacePanel !== tabName;
+  }
+}
+
+function setTaskReviewTab(tabName, moveFocus = false) {
+  for (const button of taskReviewTabButtons) {
+    const active =
+      button.dataset.taskReviewTab === tabName;
+
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
+
+    if (active && moveFocus) {
+      button.focus();
+    }
+  }
+
+  for (const panel of taskReviewTabPanels) {
+    panel.hidden =
+      panel.dataset.taskReviewPanel !== tabName;
   }
 }
 
@@ -743,6 +773,16 @@ async function loadAssignmentDetail(assignmentId, activeTab = "details") {
     .filter(Boolean)
     .join(" • ") || "Module details not added";
 
+  taskReviewAssignmentTitle.textContent =
+    assignment.moduleTitle || "Untitled assignment";
+
+  taskReviewModule.textContent = [
+    assignment.moduleCode,
+    assignment.assignmentType
+  ]
+    .filter(Boolean)
+    .join(" • ") || "Module details not added";
+
   workspaceDeadline.textContent =
     `Official deadline: ${formatDisplayDate(
       assignment.officialDeadline
@@ -979,6 +1019,7 @@ async function loadTasks(assignmentId) {
 
   if (tasks.length === 0) {
     const item = document.createElement("li");
+    item.classList.add("task-list-message");
     item.textContent = "No tasks generated yet.";
     tasksList.appendChild(item);
     return;
@@ -986,58 +1027,129 @@ async function loadTasks(assignmentId) {
 
   for (const task of tasks) {
     const item = document.createElement("li");
-    item.classList.add("task-row");
+    const approvalStatus =
+      String(task.approvalStatus || "SUGGESTED").toLowerCase();
 
-    const text = document.createElement("span");
-    text.classList.add("task-text");
-    text.textContent =
-      `${task.taskTitle} - ${task.taskStatus} (${task.approvalStatus})`;
+    item.classList.add(
+      "task-row",
+      `task-row--${approvalStatus}`
+    );
+
+    const content = document.createElement("div");
+    content.classList.add("task-card-content");
+
+    const title = document.createElement("h3");
+    title.classList.add("task-card-title");
+    title.textContent = task.taskTitle || "Untitled task";
+
+    content.appendChild(title);
+
+    if (task.taskDescription) {
+      const description = document.createElement("p");
+      description.classList.add("task-card-description");
+      description.textContent = task.taskDescription;
+      content.appendChild(description);
+    }
+
+    const metadata = document.createElement("div");
+    metadata.classList.add("task-card-metadata");
+
+    const originBadge = document.createElement("span");
+    originBadge.classList.add("task-badge", "task-badge--origin");
+    originBadge.textContent =
+      task.origin === "AI" ? "AI generated" : "Student-created";
+
+    const taskStatusBadge = document.createElement("span");
+    taskStatusBadge.classList.add(
+      "task-badge",
+      `task-badge--${String(task.taskStatus || "TO_DO").toLowerCase()}`
+    );
+    taskStatusBadge.textContent = formatTaskStatus(task.taskStatus);
+
+    const approvalBadge = document.createElement("span");
+    approvalBadge.classList.add(
+      "task-badge",
+      `task-badge--${approvalStatus}`
+    );
+    approvalBadge.textContent = {
+      suggested: "Awaiting review",
+      approved: "Approved",
+      rejected: "Rejected"
+    }[approvalStatus] || task.approvalStatus;
+
+    metadata.appendChild(originBadge);
+    metadata.appendChild(taskStatusBadge);
+    metadata.appendChild(approvalBadge);
+    content.appendChild(metadata);
 
     const actions = document.createElement("div");
     actions.classList.add("task-actions");
 
-    const approveButton = document.createElement("button");
-    approveButton.type = "button";
-    approveButton.textContent = "Approve";
-    approveButton.disabled = task.approvalStatus !== "SUGGESTED";
-    approveButton.addEventListener(
-      "click",
-      () => approveTask(task.taskId)
-    );
+    if (task.approvalStatus === "SUGGESTED") {
+      const approveButton = document.createElement("button");
+      approveButton.type = "button";
+      approveButton.textContent = "Approve";
+      approveButton.addEventListener(
+        "click",
+        () => approveTask(task.taskId)
+      );
 
-    const completeButton = document.createElement("button");
-    completeButton.type = "button";
-    completeButton.textContent = "Mark complete";
-    completeButton.disabled =
-      task.taskStatus === "COMPLETE" ||
-      task.approvalStatus !== "APPROVED";
-    completeButton.addEventListener(
-      "click",
-      () => completeTask(task.taskId)
-    );
-
-    if (task.approvalStatus !== "REJECTED") {
       actions.appendChild(approveButton);
+
+      if (task.origin === "AI") {
+        const rejectButton = document.createElement("button");
+        rejectButton.type = "button";
+        rejectButton.dataset.action = "reject";
+        rejectButton.textContent = "Reject";
+        rejectButton.addEventListener(
+          "click",
+          () => rejectTask(task.taskId)
+        );
+
+        actions.appendChild(rejectButton);
+      }
+    }
+
+    if (task.approvalStatus === "APPROVED") {
+      const approvedIndicator = document.createElement("button");
+      approvedIndicator.type = "button";
+      approvedIndicator.classList.add(
+        "task-decision-indicator",
+        "task-decision-indicator--approved"
+      );
+      approvedIndicator.textContent = "Approved";
+      approvedIndicator.disabled = true;
+
+      const completeButton = document.createElement("button");
+      completeButton.type = "button";
+      completeButton.textContent =
+        task.taskStatus === "COMPLETE"
+          ? "Completed"
+          : "Mark complete";
+      completeButton.disabled = task.taskStatus === "COMPLETE";
+      completeButton.addEventListener(
+        "click",
+        () => completeTask(task.taskId)
+      );
+
+      actions.appendChild(approvedIndicator);
       actions.appendChild(completeButton);
     }
 
-    if (
-      task.origin === "AI" &&
-      task.approvalStatus === "SUGGESTED"
-    ) {
-      const rejectButton = document.createElement("button");
-      rejectButton.type = "button";
-      rejectButton.dataset.action = "reject";
-      rejectButton.textContent = "Reject";
-      rejectButton.addEventListener(
-        "click",
-        () => rejectTask(task.taskId)
+    if (task.approvalStatus === "REJECTED") {
+      const rejectedIndicator = document.createElement("button");
+      rejectedIndicator.type = "button";
+      rejectedIndicator.classList.add(
+        "task-decision-indicator",
+        "task-decision-indicator--rejected"
       );
+      rejectedIndicator.textContent = "Rejected";
+      rejectedIndicator.disabled = true;
 
-      actions.appendChild(rejectButton);
+      actions.appendChild(rejectedIndicator);
     }
 
-    item.appendChild(text);
+    item.appendChild(content);
 
     if (actions.childElementCount > 0) {
       item.appendChild(actions);
@@ -2030,6 +2142,95 @@ backToAssignmentsButton.addEventListener("click", () => {
     behavior: "smooth"
   });
 });
+
+openTaskReviewButton.addEventListener("click", async () => {
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  setTaskReviewTab("review");
+  setApplicationView("task-review");
+  await loadTasks(selectedAssignmentId);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+});
+
+backToWorkspaceButton.addEventListener("click", () => {
+  setApplicationView("workspace");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+});
+
+refreshTaskReviewButton.addEventListener("click", async () => {
+  if (!selectedAssignmentId) {
+    return;
+  }
+
+  refreshTaskReviewButton.disabled = true;
+
+  try {
+    await loadTasks(selectedAssignmentId);
+  } finally {
+    refreshTaskReviewButton.disabled = false;
+  }
+});
+
+for (const button of taskReviewTabButtons) {
+  button.addEventListener("click", () => {
+    setTaskReviewTab(button.dataset.taskReviewTab);
+  });
+
+  button.addEventListener("keydown", event => {
+    const supportedKeys = [
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End"
+    ];
+
+    if (!supportedKeys.includes(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const currentIndex =
+      taskReviewTabButtons.indexOf(button);
+
+    let nextIndex = currentIndex;
+
+    if (event.key === "ArrowLeft") {
+      nextIndex =
+        (currentIndex - 1 + taskReviewTabButtons.length) %
+        taskReviewTabButtons.length;
+    }
+
+    if (event.key === "ArrowRight") {
+      nextIndex =
+        (currentIndex + 1) %
+        taskReviewTabButtons.length;
+    }
+
+    if (event.key === "Home") {
+      nextIndex = 0;
+    }
+
+    if (event.key === "End") {
+      nextIndex = taskReviewTabButtons.length - 1;
+    }
+
+    setTaskReviewTab(
+      taskReviewTabButtons[nextIndex].dataset.taskReviewTab,
+      true
+    );
+  });
+}
 
 for (const button of workspaceTabButtons) {
   button.addEventListener("click", () => {
