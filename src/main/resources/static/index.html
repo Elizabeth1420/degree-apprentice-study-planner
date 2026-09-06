@@ -218,84 +218,388 @@
         </button>
       </div>
 
-      <ul id="assignment-list" class="assignment-card-list"></ul>
-    </section>
+                <ul id="assignment-list" class="assignment-card-list"></ul>
+        </section>
+      </section>
+      <!-- End assignments-section -->
 
-    <section id="assignment-detail-section" class="assignment-detail-section"
-      aria-labelledby="assignment-details-heading" hidden>
-      <h2 id="assignment-details-heading">Assignment details</h2>
-      <div id="assignment-detail"></div>
+      <section
+        id="assignment-detail-section"
+        class="assignment-workspace"
+        aria-labelledby="workspace-heading"
+        hidden
+      >
+        <header class="workspace-header">
+          <button
+            id="back-to-assignments-button"
+            class="secondary-button workspace-back-button"
+            type="button"
+          >
+            ← Back to assignments
+          </button>
 
+          <div class="workspace-header-copy">
+            <p class="app-kicker">Selected assignment</p>
+            <h1 id="workspace-heading">Assignment Workspace</h1>
+          </div>
+        </header>
 
-      <h3>Edit assignment details</h3>
-      <form id="edit-assignment-form">
-        <input id="edit-module-code" placeholder="Module code">
-        <input id="edit-module-title" placeholder="Module title">
-        <input id="edit-module-leader" placeholder="Module leader">
-        <input id="edit-assignment-type" placeholder="Assignment type">
-        <input id="edit-assignment-weighting" type="number" step="0.01" placeholder="Assignment weighting">
+        <section
+          class="workspace-assignment-summary"
+          aria-labelledby="workspace-assignment-title"
+        >
+          <div>
+            <p class="section-kicker">Assignment</p>
+            <h2 id="workspace-assignment-title">
+              Loading assignment...
+            </h2>
 
-        <label class="date-field">
-          Official deadline
-          <input id="edit-official-deadline" class="date-input" type="date">
-        </label>
+            <p
+              id="workspace-module"
+              class="workspace-assignment-module"
+            ></p>
+          </div>
 
-        <label class="date-field">
-          Personal target date
-          <input id="edit-personal-target-date" class="date-input" type="date">
-        </label>
+          <div class="workspace-assignment-metadata">
+            <span
+              id="workspace-status"
+              class="assignment-status assignment-status--ongoing"
+            >
+              Ongoing
+            </span>
 
-        <textarea id="edit-assignment-task" placeholder="Assignment task"></textarea>
-        <textarea id="edit-assessment-criteria" placeholder="Assessment criteria"></textarea>
-        <textarea id="edit-learning-outcomes-ksbs" placeholder="Learning outcomes / KSBs"></textarea>
-        <textarea id="edit-referencing-guidance" placeholder="Referencing guidance"></textarea>
-        <textarea id="edit-personal-assignment-goal" placeholder="Personal assignment goal"></textarea>
+            <span id="workspace-deadline">
+              Official deadline: Not set
+            </span>
+          </div>
+        </section>
 
-        <button type="submit">Save assignment details</button>
-      </form>
+        <div
+          class="workspace-tabs"
+          role="tablist"
+          aria-label="Assignment workspace sections"
+        >
+          <button
+            id="workspace-details-tab"
+            class="workspace-tab-button is-active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="workspace-details-panel"
+            data-workspace-tab="details"
+          >
+            Details
+          </button>
 
-      <h3>Progress</h3>
-      <div id="progress-summary"></div>
+          <button
+            id="workspace-notes-tab"
+            class="workspace-tab-button"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="workspace-notes-panel"
+            data-workspace-tab="notes"
+          >
+            Notes
+          </button>
 
-      <h3>Success checklist</h3>
-      <ul id="success-checklist"></ul>
+          <button
+            id="workspace-attachments-tab"
+            class="workspace-tab-button"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="workspace-attachments-panel"
+            data-workspace-tab="attachments"
+          >
+            Attachments
+          </button>
+        </div>
 
-      <h3>Requirements</h3>
-      <button id="generate-requirements-button" type="button">Generate requirements</button>
-      <ul id="requirements-list"></ul>
+        <section
+          id="workspace-details-panel"
+          class="workspace-tab-panel"
+          role="tabpanel"
+          aria-labelledby="workspace-details-tab"
+          data-workspace-panel="details"
+        >
+          <section class="workspace-panel">
+            <div class="section-heading-row">
+              <div>
+                <p class="section-kicker">Overview</p>
+                <h2>Assignment details</h2>
+              </div>
+            </div>
 
-      <h3>Tasks</h3>
-      <button id="generate-tasks-button" type="button">Generate tasks</button>
+            <div id="assignment-detail"></div>
+          </section>
 
-      <form id="manual-task-form">
-        <input id="manual-task-title" placeholder="Manual task title" required>
-        <textarea id="manual-task-description" placeholder="Manual task description"></textarea>
-        <button type="submit">Add manual task</button>
-      </form>
-      <ul id="tasks-list"></ul>
+          <section class="workspace-panel">
+            <div class="section-heading-row">
+              <div>
+                <p class="section-kicker">Your progress</p>
+                <h2>Progress</h2>
+              </div>
+            </div>
 
-      <h3>Study sessions</h3>
-      <form id="study-session-form">
-        <input id="session-name" placeholder="Session name">
-        <input id="session-date" type="date" required>
-        <textarea id="session-goal" placeholder="Session goal"></textarea>
-        <button type="submit">Create study session</button>
-      </form>
-      <ul id="study-session-list"></ul>
+            <div id="progress-summary"></div>
 
-      <h3>Study history</h3>
-      <div id="study-history"></div>
+            <h3>Success checklist</h3>
+            <ul id="success-checklist"></ul>
+          </section>
 
-      <h3>Assignment brief text</h3>
-      <textarea id="brief-text" placeholder="Paste assignment brief text here"></textarea>
-      <button id="save-brief-text-button" type="button">Save brief text</button>
+          <section class="workspace-panel">
+            <div class="section-heading-row">
+              <div>
+                <p class="section-kicker">AI-assisted planning</p>
+                <h2>Requirements and tasks</h2>
+              </div>
+            </div>
 
-      <h3>Assignment brief file</h3>
-      <input id="brief-file" type="file" accept=".pdf,.docx">
-      <button id="upload-brief-file-button" type="button">Upload brief file</button>
-      <button id="delete-assignment-button" type="button">
-        Delete assignment
-      </button>
+            <div class="workspace-content-section">
+              <div class="workspace-subheading-row">
+                <h3>Requirements</h3>
+
+                <button
+                  id="generate-requirements-button"
+                  type="button"
+                >
+                  Generate requirements
+                </button>
+              </div>
+
+              <ul id="requirements-list"></ul>
+            </div>
+
+            <div class="workspace-content-section">
+              <div class="workspace-subheading-row">
+                <h3>Tasks</h3>
+
+                <button
+                  id="generate-tasks-button"
+                  type="button"
+                >
+                  Generate tasks
+                </button>
+              </div>
+
+              <form id="manual-task-form">
+                <input
+                  id="manual-task-title"
+                  placeholder="Manual task title"
+                  required
+                >
+
+                <textarea
+                  id="manual-task-description"
+                  placeholder="Manual task description"
+                ></textarea>
+
+                <button type="submit">
+                  Add manual task
+                </button>
+              </form>
+
+              <ul id="tasks-list"></ul>
+            </div>
+          </section>
+
+          <details class="workspace-panel workspace-editor">
+            <summary>Edit assignment details</summary>
+
+            <form id="edit-assignment-form">
+              <input
+                id="edit-module-code"
+                placeholder="Module code"
+              >
+
+              <input
+                id="edit-module-title"
+                placeholder="Module title"
+              >
+
+              <input
+                id="edit-module-leader"
+                placeholder="Module leader"
+              >
+
+              <input
+                id="edit-assignment-type"
+                placeholder="Assignment type"
+              >
+
+              <input
+                id="edit-assignment-weighting"
+                type="number"
+                step="0.01"
+                placeholder="Assignment weighting"
+              >
+
+              <label class="date-field">
+                Official deadline
+
+                <input
+                  id="edit-official-deadline"
+                  class="date-input"
+                  type="date"
+                >
+              </label>
+
+              <label class="date-field">
+                Personal target date
+
+                <input
+                  id="edit-personal-target-date"
+                  class="date-input"
+                  type="date"
+                >
+              </label>
+
+              <textarea
+                id="edit-assignment-task"
+                placeholder="Assignment task"
+              ></textarea>
+
+              <textarea
+                id="edit-assessment-criteria"
+                placeholder="Assessment criteria"
+              ></textarea>
+
+              <textarea
+                id="edit-learning-outcomes-ksbs"
+                placeholder="Learning outcomes / KSBs"
+              ></textarea>
+
+              <textarea
+                id="edit-referencing-guidance"
+                placeholder="Referencing guidance"
+              ></textarea>
+
+              <textarea
+                id="edit-personal-assignment-goal"
+                placeholder="Personal assignment goal"
+              ></textarea>
+
+              <button type="submit">
+                Save assignment details
+              </button>
+            </form>
+          </details>
+        </section>
+
+        <section
+          id="workspace-notes-panel"
+          class="workspace-tab-panel"
+          role="tabpanel"
+          aria-labelledby="workspace-notes-tab"
+          data-workspace-panel="notes"
+          hidden
+        >
+          <section class="workspace-panel">
+            <div class="section-heading-row">
+              <div>
+                <p class="section-kicker">Study planning</p>
+                <h2>Study sessions and notes</h2>
+              </div>
+            </div>
+
+            <form id="study-session-form">
+              <input
+                id="session-name"
+                placeholder="Session name"
+              >
+
+              <input
+                id="session-date"
+                type="date"
+                required
+              >
+
+              <textarea
+                id="session-goal"
+                placeholder="Session goal"
+              ></textarea>
+
+              <button type="submit">
+                Create study session
+              </button>
+            </form>
+
+            <ul id="study-session-list"></ul>
+
+            <h3>Study history</h3>
+            <div id="study-history"></div>
+          </section>
+        </section>
+
+        <section
+          id="workspace-attachments-panel"
+          class="workspace-tab-panel"
+          role="tabpanel"
+          aria-labelledby="workspace-attachments-tab"
+          data-workspace-panel="attachments"
+          hidden
+        >
+          <section class="workspace-panel">
+            <div class="section-heading-row">
+              <div>
+                <p class="section-kicker">Assignment brief</p>
+                <h2>Brief and attachments</h2>
+              </div>
+            </div>
+
+            <label for="brief-text">
+              Assignment brief text
+            </label>
+
+            <textarea
+              id="brief-text"
+              placeholder="Paste assignment brief text here"
+            ></textarea>
+
+            <button
+              id="save-brief-text-button"
+              type="button"
+            >
+              Save brief text
+            </button>
+
+            <div class="workspace-file-upload">
+              <label for="brief-file">
+                Assignment brief file
+              </label>
+
+              <input
+                id="brief-file"
+                type="file"
+                accept=".pdf,.docx"
+              >
+
+              <button
+                id="upload-brief-file-button"
+                type="button"
+              >
+                Upload brief file
+              </button>
+            </div>
+          </section>
+        </section>
+
+        <section class="workspace-danger-zone">
+          <div>
+            <h2>Delete assignment</h2>
+            <p>
+              Permanently delete this assignment and its related data.
+            </p>
+          </div>
+
+          <button
+            id="delete-assignment-button"
+            class="danger-button"
+            type="button"
+          >
+            Delete assignment
+          </button>
         </section>
       </section>
 

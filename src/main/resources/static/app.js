@@ -36,6 +36,14 @@ const logOutButton = document.getElementById("log-out-button");
 const output = document.getElementById("output");
 const assignmentDetailSection = document.getElementById("assignment-detail-section");
 const assignmentDetail = document.getElementById("assignment-detail");
+const primaryNavigation = document.querySelector(".primary-navigation");
+const backToAssignmentsButton = document.getElementById("back-to-assignments-button");
+const workspaceAssignmentTitle = document.getElementById("workspace-assignment-title");
+const workspaceModule = document.getElementById("workspace-module");
+const workspaceStatus = document.getElementById("workspace-status");
+const workspaceDeadline = document.getElementById("workspace-deadline");
+const workspaceTabButtons = Array.from(document.querySelectorAll("[data-workspace-tab]"));
+const workspaceTabPanels = Array.from(document.querySelectorAll("[data-workspace-panel]"));
 const deleteAssignmentButton = document.getElementById("delete-assignment-button");
 const briefTextInput = document.getElementById("brief-text");
 const saveBriefTextButton = document.getElementById("save-brief-text-button");
@@ -146,19 +154,48 @@ function formatWelcomeName(email) {
 
 function setApplicationView(view) {
   const showHome = view === "home";
+  const showAssignments = view === "assignments";
+  const showWorkspace = view === "workspace";
 
   homeSection.hidden = !showHome;
-  assignmentsSection.hidden = showHome;
+  assignmentsSection.hidden = !showAssignments;
+  assignmentDetailSection.hidden = !showWorkspace;
+  primaryNavigation.hidden = showWorkspace;
 
   showHomeButton.classList.toggle("is-active", showHome);
-  showAssignmentsButton.classList.toggle("is-active", !showHome);
+  showAssignmentsButton.classList.toggle(
+    "is-active",
+    showAssignments
+  );
+
+  showHomeButton.removeAttribute("aria-current");
+  showAssignmentsButton.removeAttribute("aria-current");
 
   if (showHome) {
     showHomeButton.setAttribute("aria-current", "page");
-    showAssignmentsButton.removeAttribute("aria-current");
-  } else {
+  }
+
+  if (showAssignments) {
     showAssignmentsButton.setAttribute("aria-current", "page");
-    showHomeButton.removeAttribute("aria-current");
+  }
+}
+
+function setWorkspaceTab(tabName, moveFocus = false) {
+  for (const button of workspaceTabButtons) {
+    const active = button.dataset.workspaceTab === tabName;
+
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
+
+    if (active && moveFocus) {
+      button.focus();
+    }
+  }
+
+  for (const panel of workspaceTabPanels) {
+    panel.hidden =
+      panel.dataset.workspacePanel !== tabName;
   }
 }
 
@@ -595,11 +632,6 @@ function renderAssignmentCards() {
     card.addEventListener("click", async () => {
       setAssignmentCreatePanel(false);
       await loadAssignmentDetail(assignment.assignmentId);
-
-      assignmentDetailSection.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
     });
 
     item.appendChild(card);
@@ -679,56 +711,234 @@ function addDetail(label, value, options = {}) {
   assignmentDetail.appendChild(paragraph);
 }
 
-async function loadAssignmentDetail(assignmentId) {
-  const response = await apiFetch(`/api/assignments/${assignmentId}`);
+async function loadAssignmentDetail(assignmentId, activeTab = "details") {
+  const response = await apiFetch(
+    `/api/assignments/${assignmentId}`
+  );
 
   if (!response.ok) {
-    show(`${response.status} ${response.statusText}\n${await response.text()}`);
+    show(
+      `${response.status} ${response.statusText}\n${await response.text()}`
+    );
     return;
   }
 
-
   const assignment = await response.json();
   selectedAssignmentId = assignment.assignmentId;
+
+  const cardData = assignmentCardsData.find(
+    item =>
+      item.assignment.assignmentId === assignment.assignmentId
+  );
+
+  const completed = assignmentIsCompleted(cardData?.progress);
+
+  workspaceAssignmentTitle.textContent =
+    assignment.moduleTitle || "Untitled assignment";
+
+  workspaceModule.textContent = [
+    assignment.moduleCode,
+    assignment.assignmentType
+  ]
+    .filter(Boolean)
+    .join(" • ") || "Module details not added";
+
+  workspaceDeadline.textContent =
+    `Official deadline: ${formatDisplayDate(
+      assignment.officialDeadline
+    )}`;
+
+  workspaceStatus.textContent =
+    completed ? "Completed" : "Ongoing";
+
+  workspaceStatus.classList.toggle(
+    "assignment-status--completed",
+    completed
+  );
+
+  workspaceStatus.classList.toggle(
+    "assignment-status--ongoing",
+    !completed
+  );
+
   briefTextInput.value = assignment.extractedText || "";
+
   populateEditAssignmentForm(assignment);
   assignmentDetail.replaceChildren();
-  assignmentDetailSection.hidden = false;
 
-  addDetail("Module", `${assignment.moduleCode || ""} - ${assignment.moduleTitle || ""}`, { variant: "compact" });
-  addDetail("Module leader", assignment.moduleLeader, { variant: "compact" });
-  addDetail("Assignment type", assignment.assignmentType, { variant: "compact" });
-  addDetail("Assignment weighting", assignment.assignmentWeighting, { variant: "compact" });
-  addDetail("Official deadline", assignment.officialDeadline, { variant: "compact" });
-  addDetail("Personal target date", assignment.personalTargetDate, { variant: "compact" });
-  addDetail("Assignment task", assignment.assignmentTask, { variant: "wide", list: true });
-  addDetail("Assessment criteria", assignment.assessmentCriteria, { variant: "wide", list: true });
-  addDetail("Learning outcomes / KSBs", assignment.learningOutcomesKsbs, { variant: "wide", list: true });
-  addDetail("Referencing guidance", assignment.referencingGuidance, { variant: "wide", list: true, wrap: true });
-  addDetail("Personal assignment goal", assignment.personalAssignmentGoal, { variant: "compact" });
-  addDetail("Uploaded file", assignment.uploadedFileName, { variant: "compact", wrap: true });
-  addDetail("Uploaded file type", assignment.uploadedFileType, { variant: "compact", wrap: true });
-  await loadProgress(selectedAssignmentId);
-  await loadSuccessChecklist(selectedAssignmentId);
-  await loadRequirements(selectedAssignmentId);
-  await loadTasks(selectedAssignmentId);
-  await loadStudySessions(selectedAssignmentId);
-  await loadStudyHistory(selectedAssignmentId);
+  addDetail(
+    "Module",
+    [assignment.moduleCode, assignment.moduleTitle]
+      .filter(Boolean)
+      .join(" — "),
+    { variant: "compact" }
+  );
+
+  addDetail(
+    "Module leader",
+    assignment.moduleLeader,
+    { variant: "compact" }
+  );
+
+  addDetail(
+    "Assignment type",
+    assignment.assignmentType,
+    { variant: "compact" }
+  );
+
+  addDetail(
+    "Assignment weighting",
+    assignment.assignmentWeighting,
+    { variant: "compact" }
+  );
+
+  addDetail(
+    "Official deadline",
+    formatDisplayDate(assignment.officialDeadline),
+    { variant: "compact" }
+  );
+
+  addDetail(
+    "Personal target date",
+    formatDisplayDate(assignment.personalTargetDate),
+    { variant: "compact" }
+  );
+
+  addDetail(
+    "Assignment task",
+    assignment.assignmentTask,
+    {
+      variant: "wide",
+      list: true
+    }
+  );
+
+  addDetail(
+    "Assessment criteria",
+    assignment.assessmentCriteria,
+    {
+      variant: "wide",
+      list: true
+    }
+  );
+
+  addDetail(
+    "Learning outcomes / KSBs",
+    assignment.learningOutcomesKsbs,
+    {
+      variant: "wide",
+      list: true
+    }
+  );
+
+  addDetail(
+    "Referencing guidance",
+    assignment.referencingGuidance,
+    {
+      variant: "wide",
+      list: true,
+      wrap: true
+    }
+  );
+
+  addDetail(
+    "Personal assignment goal",
+    assignment.personalAssignmentGoal,
+    { variant: "compact" }
+  );
+
+  addDetail(
+    "Uploaded file",
+    assignment.uploadedFileName,
+    {
+      variant: "compact",
+      wrap: true
+    }
+  );
+
+  addDetail(
+    "Uploaded file type",
+    assignment.uploadedFileType,
+    {
+      variant: "compact",
+      wrap: true
+    }
+  );
+
+  // Clear information from the previously opened assignment.
+  progressSummary.replaceChildren();
+  successChecklist.replaceChildren();
+  requirementsList.replaceChildren();
+  tasksList.replaceChildren();
+  studySessionList.replaceChildren();
+  studyHistory.replaceChildren();
+
+  // Open the Workspace as soon as the main assignment has loaded.
+  setWorkspaceTab(activeTab);
+  setApplicationView("workspace");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+  // Load the remaining Workspace sections independently.
+  const workspaceResults = await Promise.allSettled([
+    loadProgress(selectedAssignmentId),
+    loadSuccessChecklist(selectedAssignmentId),
+    loadRequirements(selectedAssignmentId),
+    loadTasks(selectedAssignmentId),
+    loadStudySessions(selectedAssignmentId),
+    loadStudyHistory(selectedAssignmentId)
+  ]);
+
+  const workspaceLoadFailed = workspaceResults.some(
+    result => result.status === "rejected"
+  );
+
+  if (workspaceLoadFailed) {
+    show(
+      "The assignment opened, but some Workspace information could not be loaded."
+    );
+  }
 }
 
 function populateEditAssignmentForm(assignment) {
-  document.getElementById("edit-module-code").value = assignment.moduleCode || "";
-  document.getElementById("edit-module-title").value = assignment.moduleTitle || "";
-  document.getElementById("edit-module-leader").value = assignment.moduleLeader || "";
-  document.getElementById("edit-assignment-type").value = assignment.assignmentType || "";
-  document.getElementById("edit-assignment-weighting").value = assignment.assignmentWeighting || "";
-  document.getElementById("edit-official-deadline").value = assignment.officialDeadline || "";
-  document.getElementById("edit-personal-target-date").value = assignment.personalTargetDate || "";
-  document.getElementById("edit-assignment-task").value = assignment.assignmentTask || "";
-  document.getElementById("edit-assessment-criteria").value = assignment.assessmentCriteria || "";
-  document.getElementById("edit-learning-outcomes-ksbs").value = assignment.learningOutcomesKsbs || "";
-  document.getElementById("edit-referencing-guidance").value = assignment.referencingGuidance || "";
-  document.getElementById("edit-personal-assignment-goal").value = assignment.personalAssignmentGoal || "";
+  document.getElementById("edit-module-code").value =
+    assignment.moduleCode || "";
+
+  document.getElementById("edit-module-title").value =
+    assignment.moduleTitle || "";
+
+  document.getElementById("edit-module-leader").value =
+    assignment.moduleLeader || "";
+
+  document.getElementById("edit-assignment-type").value =
+    assignment.assignmentType || "";
+
+  document.getElementById("edit-assignment-weighting").value =
+    assignment.assignmentWeighting || "";
+
+  document.getElementById("edit-official-deadline").value =
+    assignment.officialDeadline || "";
+
+  document.getElementById("edit-personal-target-date").value =
+    assignment.personalTargetDate || "";
+
+  document.getElementById("edit-assignment-task").value =
+    assignment.assignmentTask || "";
+
+  document.getElementById("edit-assessment-criteria").value =
+    assignment.assessmentCriteria || "";
+
+  document.getElementById("edit-learning-outcomes-ksbs").value =
+    assignment.learningOutcomesKsbs || "";
+
+  document.getElementById("edit-referencing-guidance").value =
+    assignment.referencingGuidance || "";
+
+  document.getElementById("edit-personal-assignment-goal").value =
+    assignment.personalAssignmentGoal || "";
 }
 
 async function loadRequirements(assignmentId) {
@@ -969,6 +1179,8 @@ async function loadStudySessions(assignmentId) {
     const item = document.createElement("li");
 
     const text = document.createElement("span");
+    item.classList.add("study-session-card");
+    text.classList.add("study-session-summary");
     text.textContent = `${session.sessionDate} - ${session.sessionName || "Study session"} (${session.sessionStatus}, ${session.timerStatus}, ${session.durationSeconds || 0}s) `;
 
     const startButton = document.createElement("button");
@@ -996,6 +1208,14 @@ async function loadStudySessions(assignmentId) {
     completeButton.addEventListener("click", () => completeStudySession(session.sessionId));
 
     item.appendChild(text);
+    for (const button of [
+      startButton,
+      pauseButton,
+      resumeButton,
+      completeButton
+    ]) {
+      button.classList.add("session-control-button");
+    }
     item.appendChild(startButton);
     item.appendChild(pauseButton);
     item.appendChild(resumeButton);
@@ -1005,36 +1225,57 @@ async function loadStudySessions(assignmentId) {
     const linkedTaskIds = linkedTasks.map(sessionTask => sessionTask.taskId);
 
     const sessionTaskList = document.createElement("ul");
+    sessionTaskList.classList.add("session-linked-task-list");
 
     for (const sessionTask of linkedTasks) {
-      const linkedTask = tasks.find(task => task.taskId === sessionTask.taskId);
+      const linkedTask = tasks.find(
+        task => task.taskId === sessionTask.taskId
+      );
+
       const linkedItem = document.createElement("li");
 
-      linkedItem.textContent = linkedTask ? linkedTask.taskTitle : sessionTask.taskId;
+      linkedItem.textContent = linkedTask
+        ? linkedTask.taskTitle
+        : sessionTask.taskId;
 
-      const outcomeStatusSelect = document.createElement("select");
+      const outcomeStatusSelect =
+        document.createElement("select");
 
-      const emptyOutcomeOption = document.createElement("option");
+      const emptyOutcomeOption =
+        document.createElement("option");
+
       emptyOutcomeOption.value = "";
       emptyOutcomeOption.textContent = "Choose outcome";
       outcomeStatusSelect.appendChild(emptyOutcomeOption);
 
-      for (const status of ["COMPLETE", "PARTIAL", "INCOMPLETE"]) {
+      for (const status of [
+        "COMPLETE",
+        "PARTIAL",
+        "INCOMPLETE"
+      ]) {
         const option = document.createElement("option");
+
         option.value = status;
         option.textContent = status;
+
         outcomeStatusSelect.appendChild(option);
       }
 
-      outcomeStatusSelect.value = sessionTask.outcomeStatus || "";
+      outcomeStatusSelect.value =
+        sessionTask.outcomeStatus || "";
 
-      const outcomeInput = document.createElement("textarea");
+      const outcomeInput =
+        document.createElement("textarea");
+
       outcomeInput.placeholder = "Task outcome";
       outcomeInput.value = sessionTask.outcome || "";
 
-      const saveOutcomeButton = document.createElement("button");
+      const saveOutcomeButton =
+        document.createElement("button");
+
       saveOutcomeButton.type = "button";
       saveOutcomeButton.textContent = "Save outcome";
+
       saveOutcomeButton.addEventListener("click", () => {
         saveTaskOutcome(
           session.sessionId,
@@ -1044,17 +1285,45 @@ async function loadStudySessions(assignmentId) {
         );
       });
 
-      const removeButton = document.createElement("button");
+      const removeButton =
+        document.createElement("button");
+
       removeButton.type = "button";
       removeButton.textContent = "Remove";
-      removeButton.disabled = session.sessionStatus === "COMPLETED";
-      removeButton.addEventListener("click", () => removeTaskFromStudySession(session.sessionId, sessionTask.taskId));
+      removeButton.disabled =
+        session.sessionStatus === "COMPLETED";
 
-      linkedItem.append(" ");
+      removeButton.addEventListener("click", () => {
+        removeTaskFromStudySession(
+          session.sessionId,
+          sessionTask.taskId
+        );
+      });
+
+      linkedItem.classList.add("session-linked-task");
+
+      outcomeStatusSelect.classList.add(
+        "session-outcome-select"
+      );
+
+      outcomeInput.classList.add(
+        "session-outcome-input"
+      );
+
+      saveOutcomeButton.classList.add(
+        "session-outcome-button"
+      );
+
+      removeButton.classList.add(
+        "session-outcome-button",
+        "session-remove-button"
+      );
+
       linkedItem.appendChild(outcomeStatusSelect);
       linkedItem.appendChild(outcomeInput);
       linkedItem.appendChild(saveOutcomeButton);
       linkedItem.appendChild(removeButton);
+
       sessionTaskList.appendChild(linkedItem);
     }
 
@@ -1063,6 +1332,7 @@ async function loadStudySessions(assignmentId) {
       task.approvalStatus === "APPROVED" &&
       task.taskStatus !== "COMPLETE"
     );
+
     const taskSelect = document.createElement("select");
     const placeholderOption = document.createElement("option");
     placeholderOption.value = "";
@@ -1086,6 +1356,12 @@ async function loadStudySessions(assignmentId) {
       }
     });
 
+    taskSelect.classList.add("session-task-select");
+
+    addTaskButton.classList.add(
+      "session-add-task-button"
+    );
+
     const notesInput = document.createElement("textarea");
     notesInput.placeholder = "Session notes";
     notesInput.value = session.sessionNotes || "";
@@ -1096,6 +1372,12 @@ async function loadStudySessions(assignmentId) {
     saveNotesButton.addEventListener("click", () => {
       saveStudySessionNotes(session.sessionId, notesInput.value);
     });
+
+    notesInput.classList.add("session-notes-input");
+
+    saveNotesButton.classList.add(
+      "session-save-notes-button"
+    );
 
     item.appendChild(sessionTaskList);
     item.appendChild(taskSelect);
@@ -1628,9 +1910,14 @@ deleteAssignmentButton.addEventListener("click", async () => {
   selectedAssignmentId = null;
   briefTextInput.value = "";
   assignmentDetail.replaceChildren();
-  assignmentDetailSection.hidden = true;
+  setApplicationView("assignments");
   show("Assignment deleted.");
   await loadAssignments();
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 });
 
 saveBriefTextButton.addEventListener("click", async () => {
@@ -1653,7 +1940,7 @@ saveBriefTextButton.addEventListener("click", async () => {
     return;
   }
 
-  await loadAssignmentDetail(selectedAssignmentId);
+  await loadAssignmentDetail(selectedAssignmentId, "attachments");
   show("Brief text saved.");
 });
 
@@ -1683,7 +1970,8 @@ uploadBriefFileButton.addEventListener("click", async () => {
   }
 
   briefFileInput.value = "";
-  await loadAssignmentDetail(selectedAssignmentId);
+
+  await loadAssignmentDetail(selectedAssignmentId, "attachments");
   show("Brief file uploaded.");
 });
 
@@ -1733,6 +2021,66 @@ showHomeButton.addEventListener("click", async () => {
 showAssignmentsButton.addEventListener("click", () => {
   setApplicationView("assignments");
 });
+
+backToAssignmentsButton.addEventListener("click", () => {
+  setApplicationView("assignments");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+});
+
+for (const button of workspaceTabButtons) {
+  button.addEventListener("click", () => {
+    setWorkspaceTab(button.dataset.workspaceTab);
+  });
+
+  button.addEventListener("keydown", event => {
+    const supportedKeys = [
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End"
+    ];
+
+    if (!supportedKeys.includes(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const currentIndex =
+      workspaceTabButtons.indexOf(button);
+
+    let nextIndex = currentIndex;
+
+    if (event.key === "ArrowLeft") {
+      nextIndex =
+        (currentIndex - 1 + workspaceTabButtons.length) %
+        workspaceTabButtons.length;
+    }
+
+    if (event.key === "ArrowRight") {
+      nextIndex =
+        (currentIndex + 1) %
+        workspaceTabButtons.length;
+    }
+
+    if (event.key === "Home") {
+      nextIndex = 0;
+    }
+
+    if (event.key === "End") {
+      nextIndex = workspaceTabButtons.length - 1;
+    }
+
+    setWorkspaceTab(
+      workspaceTabButtons[nextIndex].dataset.workspaceTab,
+      true
+    );
+  });
+}
 
 toggleAssignmentFormButton.addEventListener("click", () => {
   setAssignmentCreatePanel(assignmentCreatePanel.hidden);
