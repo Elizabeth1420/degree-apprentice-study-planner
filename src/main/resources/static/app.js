@@ -7,6 +7,7 @@ const loginSection = document.getElementById("login-section");
 const dashboardSection = document.getElementById("dashboard-section");
 const homeSection = document.getElementById("home-section");
 const assignmentsSection = document.getElementById("assignments-section");
+const progressHistorySection = document.getElementById("progress-history-section");
 const homeHeading = document.getElementById("home-heading");
 const toDoTaskCount = document.getElementById("to-do-task-count");
 const inProgressTaskCount = document.getElementById("in-progress-task-count");
@@ -15,6 +16,7 @@ const allTaskCount = document.getElementById("all-task-count");
 const approvedTaskList = document.getElementById("approved-task-list");
 const showHomeButton = document.getElementById("show-home-button");
 const showAssignmentsButton = document.getElementById("show-assignments-button");
+const showProgressButton = document.getElementById("show-progress-button");
 const loginForm = document.getElementById("login-form");
 const showSignUpButton = document.getElementById("show-sign-up-button");
 const showLoginButton = document.getElementById("show-login-button");
@@ -105,6 +107,12 @@ const plannedStudySessionCount = document.getElementById("planned-study-session-
 const activeStudySessionCount = document.getElementById("active-study-session-count");
 const completedStudySessionCount = document.getElementById("completed-study-session-count");
 const studyPlanningTotalTime = document.getElementById("study-planning-total-time");
+const progressHistoryCompletedTaskCount = document.getElementById("progress-history-completed-task-count");
+const progressHistoryOngoingTaskCount = document.getElementById("progress-history-ongoing-task-count");
+const progressHistoryTotalStudyTime = document.getElementById("progress-history-total-study-time");
+const dailyTaskActivityChart = document.getElementById("daily-task-activity-chart");
+const progressHistorySessionCount = document.getElementById("progress-history-session-count");
+const previousStudySessions = document.getElementById("previous-study-sessions");
 
 let accessToken = null;
 let selectedAssignmentId = null;
@@ -210,9 +218,11 @@ function setApplicationView(view) {
   const showWorkspace = view === "workspace";
   const showTaskReview = view === "task-review";
   const showStudySession = view === "study-session";
+  const showProgressHistory = view === "progress-history";
 
   homeSection.hidden = !showHome;
   assignmentsSection.hidden = !showAssignments;
+  progressHistorySection.hidden = !showProgressHistory;
   assignmentDetailSection.hidden = !showWorkspace;
   taskReviewSection.hidden = !showTaskReview;
   studySessionSection.hidden = !showStudySession;
@@ -224,9 +234,14 @@ function setApplicationView(view) {
     "is-active",
     showAssignments
   );
+  showProgressButton.classList.toggle(
+    "is-active",
+    showProgressHistory
+  );
 
   showHomeButton.removeAttribute("aria-current");
   showAssignmentsButton.removeAttribute("aria-current");
+  showProgressButton.removeAttribute("aria-current");
 
   if (showHome) {
     showHomeButton.setAttribute("aria-current", "page");
@@ -234,6 +249,10 @@ function setApplicationView(view) {
 
   if (showAssignments) {
     showAssignmentsButton.setAttribute("aria-current", "page");
+  }
+
+  if (showProgressHistory) {
+    showProgressButton.setAttribute("aria-current", "page");
   }
 }
 
@@ -594,6 +613,296 @@ function renderHomeDashboard() {
     item.appendChild(taskCopy);
     item.appendChild(metadata);
     approvedTaskList.appendChild(item);
+  }
+}
+
+function createProgressHistoryEmptyItem(message) {
+  const item = document.createElement("li");
+  item.classList.add("task-list-message");
+  item.textContent = message;
+  return item;
+}
+
+function getRecentActivityDays() {
+  const days = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - offset);
+
+    const dateKey = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0")
+    ].join("-");
+
+    days.push({
+      dateKey,
+      dayLabel: new Intl.DateTimeFormat("en-GB", {
+        weekday: "short"
+      }).format(date),
+      dateLabel: new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "short"
+      }).format(date),
+      taskCount: 0
+    });
+  }
+
+  return days;
+}
+
+function renderDailyTaskActivity(sessionRecords) {
+  const recentDays = getRecentActivityDays();
+  const daysByDate = new Map(
+    recentDays.map(day => [day.dateKey, day])
+  );
+
+  for (const { session, linkedTasks } of sessionRecords) {
+    if (session.sessionStatus !== "COMPLETED") {
+      continue;
+    }
+
+    const activityDay = daysByDate.get(session.sessionDate);
+
+    if (!activityDay) {
+      continue;
+    }
+
+    activityDay.taskCount += linkedTasks.filter(
+      sessionTask => Boolean(sessionTask.outcomeStatus)
+    ).length;
+  }
+
+  const maximumTaskCount = Math.max(
+    1,
+    ...recentDays.map(day => day.taskCount)
+  );
+
+  dailyTaskActivityChart.replaceChildren();
+
+  for (const day of recentDays) {
+    const item = document.createElement("li");
+    item.classList.add("daily-task-activity-day");
+    item.setAttribute(
+      "aria-label",
+      `${day.dateLabel}: ${day.taskCount} ${day.taskCount === 1 ? "task" : "tasks"} reviewed`
+    );
+
+    const value = document.createElement("strong");
+    value.classList.add("daily-task-activity-value");
+    value.textContent = String(day.taskCount);
+
+    const barTrack = document.createElement("span");
+    barTrack.classList.add("daily-task-activity-bar-track");
+
+    const bar = document.createElement("span");
+    bar.classList.add("daily-task-activity-bar");
+    bar.style.height =
+      `${Math.round((day.taskCount / maximumTaskCount) * 100)}%`;
+    barTrack.appendChild(bar);
+
+    const dayLabel = document.createElement("span");
+    dayLabel.classList.add("daily-task-activity-day-label");
+    dayLabel.textContent = day.dayLabel;
+
+    const dateLabel = document.createElement("span");
+    dateLabel.classList.add("daily-task-activity-date-label");
+    dateLabel.textContent = day.dateLabel;
+
+    item.appendChild(value);
+    item.appendChild(barTrack);
+    item.appendChild(dayLabel);
+    item.appendChild(dateLabel);
+    dailyTaskActivityChart.appendChild(item);
+  }
+}
+
+function renderPreviousStudySessions(sessionRecords) {
+  const completedSessions = sessionRecords
+    .filter(({ session }) =>
+      session.sessionStatus === "COMPLETED"
+    )
+    .sort((first, second) => {
+      const firstDate = new Date(
+        first.session.endTime ||
+        `${first.session.sessionDate}T00:00:00`
+      );
+      const secondDate = new Date(
+        second.session.endTime ||
+        `${second.session.sessionDate}T00:00:00`
+      );
+
+      return secondDate - firstDate;
+    });
+
+  const sessionCount = completedSessions.length;
+  progressHistorySessionCount.textContent =
+    `${sessionCount} ${sessionCount === 1 ? "session" : "sessions"}`;
+  previousStudySessions.replaceChildren();
+
+  if (sessionCount === 0) {
+    previousStudySessions.appendChild(
+      createProgressHistoryEmptyItem(
+        "Completed study sessions will appear here."
+      )
+    );
+    return;
+  }
+
+  for (const { assignment, session, linkedTasks } of completedSessions) {
+    const item = document.createElement("li");
+    item.classList.add("previous-study-session-card");
+
+    const header = document.createElement("div");
+    header.classList.add("previous-study-session-header");
+
+    const headingGroup = document.createElement("div");
+    headingGroup.classList.add("previous-study-session-heading");
+
+    const date = document.createElement("p");
+    date.classList.add("previous-study-session-date");
+    date.textContent = formatDisplayDate(session.sessionDate);
+
+    const heading = document.createElement("h3");
+    heading.textContent = session.sessionName || "Study session";
+
+    const assignmentLabel = document.createElement("p");
+    assignmentLabel.classList.add("previous-study-session-assignment");
+    assignmentLabel.textContent = [
+      assignment.moduleCode,
+      assignment.moduleTitle
+    ].filter(Boolean).join(" • ") || "Assignment details not added";
+
+    headingGroup.appendChild(date);
+    headingGroup.appendChild(heading);
+    headingGroup.appendChild(assignmentLabel);
+
+    const duration = createSessionBadge(
+      formatDuration(getElapsedStudySeconds(session)),
+      "duration"
+    );
+
+    header.appendChild(headingGroup);
+    header.appendChild(duration);
+    item.appendChild(header);
+
+    const outcomeCounts = linkedTasks.reduce(
+      (counts, sessionTask) => {
+        if (Object.hasOwn(counts, sessionTask.outcomeStatus)) {
+          counts[sessionTask.outcomeStatus] += 1;
+        }
+
+        return counts;
+      },
+      {
+        COMPLETE: 0,
+        PARTIAL: 0,
+        INCOMPLETE: 0
+      }
+    );
+
+    const outcomeSummary = document.createElement("div");
+    outcomeSummary.classList.add("previous-study-session-outcomes");
+
+    for (const [label, value, variant] of [
+      ["Complete", outcomeCounts.COMPLETE, "complete"],
+      ["Partial", outcomeCounts.PARTIAL, "partial"],
+      ["Incomplete", outcomeCounts.INCOMPLETE, "incomplete"]
+    ]) {
+      const outcome = document.createElement("span");
+      outcome.classList.add(
+        "previous-study-session-outcome",
+        `previous-study-session-outcome--${variant}`
+      );
+      outcome.textContent = `${label}: ${value}`;
+      outcomeSummary.appendChild(outcome);
+    }
+
+    item.appendChild(outcomeSummary);
+
+    if (session.sessionNotes) {
+      const notes = document.createElement("p");
+      notes.classList.add("previous-study-session-notes");
+
+      const label = document.createElement("strong");
+      label.textContent = "Notes: ";
+
+      notes.appendChild(label);
+      notes.append(session.sessionNotes);
+      item.appendChild(notes);
+    }
+
+    previousStudySessions.appendChild(item);
+  }
+}
+
+async function loadProgressHistoryDashboard() {
+  const approvedTasks = getApprovedDashboardTasks();
+  const completedTasks = approvedTasks.filter(
+    ({ task }) => task.taskStatus === "COMPLETE"
+  ).length;
+  const ongoingTasks = approvedTasks.length - completedTasks;
+
+  progressHistoryCompletedTaskCount.textContent =
+    String(completedTasks);
+  progressHistoryOngoingTaskCount.textContent =
+    String(ongoingTasks);
+  progressHistoryTotalStudyTime.textContent = "Loading…";
+  progressHistorySessionCount.textContent = "Loading…";
+  dailyTaskActivityChart.replaceChildren(
+    createProgressHistoryEmptyItem("Loading recent activity…")
+  );
+  previousStudySessions.replaceChildren(
+    createProgressHistoryEmptyItem("Loading study sessions…")
+  );
+
+  const sessionResults = await Promise.allSettled(
+    assignmentCardsData.map(async ({ assignment }) => {
+      const response = await apiFetch(
+        `/api/assignments/${assignment.assignmentId}/study-sessions`
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `${response.status} ${response.statusText}`
+        );
+      }
+
+      const sessions = await response.json();
+      return sessions.map(session => ({ assignment, session }));
+    })
+  );
+
+  const sessions = sessionResults.flatMap(result =>
+    result.status === "fulfilled" ? result.value : []
+  );
+  const sessionRecords = await Promise.all(
+    sessions.map(async ({ assignment, session }) => ({
+      assignment,
+      session,
+      linkedTasks: await loadSessionTasks(
+        assignment.assignmentId,
+        session.sessionId
+      )
+    }))
+  );
+
+  const totalStudySeconds = sessionRecords.reduce(
+    (total, { session }) =>
+      total + getElapsedStudySeconds(session),
+    0
+  );
+
+  progressHistoryTotalStudyTime.textContent =
+    formatDuration(totalStudySeconds);
+  renderDailyTaskActivity(sessionRecords);
+  renderPreviousStudySessions(sessionRecords);
+
+  if (sessionResults.some(result => result.status === "rejected")) {
+    show("Some progress information could not be loaded.");
   }
 }
 
@@ -2776,6 +3085,10 @@ function showLoggedOutState() {
   activeStudySessionCount.textContent = "0";
   completedStudySessionCount.textContent = "0";
   studyPlanningTotalTime.textContent = "0s";
+  progressHistoryCompletedTaskCount.textContent = "0";
+  progressHistoryOngoingTaskCount.textContent = "0";
+  progressHistoryTotalStudyTime.textContent = "0s";
+  progressHistorySessionCount.textContent = "0 sessions";
   approvedTaskList.replaceChildren();
   assignmentList.replaceChildren();
   assignmentDetail.replaceChildren();
@@ -2786,6 +3099,8 @@ function showLoggedOutState() {
   progressSummary.replaceChildren();
   successChecklist.replaceChildren();
   studyHistory.replaceChildren();
+  dailyTaskActivityChart.replaceChildren();
+  previousStudySessions.replaceChildren();
 
   briefTextInput.value = "";
   briefFileInput.value = "";
@@ -3152,6 +3467,11 @@ showHomeButton.addEventListener("click", async () => {
 
 showAssignmentsButton.addEventListener("click", () => {
   setApplicationView("assignments");
+});
+
+showProgressButton.addEventListener("click", async () => {
+  setApplicationView("progress-history");
+  await loadProgressHistoryDashboard();
 });
 
 backToAssignmentsButton.addEventListener("click", () => {

@@ -224,6 +224,101 @@
       <!-- End assignments-section -->
 
       <section
+        id="progress-history-section"
+        class="progress-history-screen"
+        aria-labelledby="progress-history-heading"
+        hidden
+      >
+        <header class="app-header progress-history-header">
+          <div class="app-header-copy">
+            <p class="app-kicker">Your learning activity</p>
+            <h1 id="progress-history-heading">
+              Progress &amp; History
+            </h1>
+          </div>
+        </header>
+
+        <p class="progress-history-guidance" role="note">
+          Your progress is based on approved tasks and completed
+          study sessions across all assignments.
+        </p>
+
+        <dl
+          class="progress-history-summary"
+          aria-label="Overall progress summary"
+        >
+          <div class="progress-history-summary-card">
+            <dt>Completed tasks</dt>
+            <dd id="progress-history-completed-task-count">0</dd>
+          </div>
+
+          <div class="progress-history-summary-card">
+            <dt>Ongoing tasks</dt>
+            <dd id="progress-history-ongoing-task-count">0</dd>
+          </div>
+
+          <div class="progress-history-summary-card">
+            <dt>Total study time</dt>
+            <dd id="progress-history-total-study-time">0s</dd>
+          </div>
+        </dl>
+
+        <section
+          class="progress-history-panel"
+          aria-labelledby="daily-task-activity-heading"
+        >
+          <div class="section-heading-row">
+            <div>
+              <p class="section-kicker">Last seven days</p>
+              <h2 id="daily-task-activity-heading">
+                Daily task activity
+              </h2>
+            </div>
+          </div>
+
+          <ul
+            id="daily-task-activity-chart"
+            class="daily-task-activity-chart"
+            aria-label="Tasks reviewed during study sessions over the last seven days"
+          >
+            <li class="task-list-message">
+              Your recent task activity will appear here.
+            </li>
+          </ul>
+        </section>
+
+        <section
+          class="progress-history-panel"
+          aria-labelledby="previous-study-sessions-heading"
+        >
+          <div class="section-heading-row">
+            <div>
+              <p class="section-kicker">Study record</p>
+              <h2 id="previous-study-sessions-heading">
+                Previous sessions
+              </h2>
+            </div>
+
+            <span
+              id="progress-history-session-count"
+              class="progress-history-session-count"
+            >
+              0 sessions
+            </span>
+          </div>
+
+          <ul
+            id="previous-study-sessions"
+            class="previous-study-sessions"
+          >
+            <li class="task-list-message">
+              Completed study sessions will appear here.
+            </li>
+          </ul>
+        </section>
+      </section>
+
+      <section
         id="assignment-detail-section"
         class="assignment-workspace"
         aria-labelledby="workspace-heading"
@@ -1228,6 +1323,10 @@
 
         <button id="show-assignments-button" class="primary-navigation-button" type="button">
           Assignments
+        </button>
+
+        <button id="show-progress-button" class="primary-navigation-button" type="button">
+          Progress
         </button>
       </nav>
     </section>
