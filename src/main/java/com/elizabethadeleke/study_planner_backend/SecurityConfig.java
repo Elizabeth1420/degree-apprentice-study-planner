@@ -13,7 +13,7 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/app.js", "/api/health").permitAll()
+                        .requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico", "/api/health").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
                 }))
