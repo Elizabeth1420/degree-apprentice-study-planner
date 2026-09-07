@@ -69,6 +69,15 @@ const studyTimerStartButton = document.getElementById("study-timer-start-button"
 const studyTimerPauseButton = document.getElementById("study-timer-pause-button");
 const studyTimerResumeButton = document.getElementById("study-timer-resume-button");
 const studyTimerFinishButton = document.getElementById("study-timer-finish-button");
+const studySessionReviewTab = document.getElementById("study-session-review-tab");
+const studyReviewSessionName = document.getElementById("study-review-session-name");
+const studyReviewDuration = document.getElementById("study-review-duration");
+const studyReviewSessionDate = document.getElementById("study-review-session-date");
+const studyReviewGoal = document.getElementById("study-review-goal");
+const studyReviewTaskCount = document.getElementById("study-review-task-count");
+const studyReviewTaskList = document.getElementById("study-review-task-list");
+const studyReviewNotesInput = document.getElementById("study-review-notes-input");
+const saveStudyReviewButton = document.getElementById("save-study-review-button");
 const workspaceAssignmentTitle = document.getElementById("workspace-assignment-title");
 const workspaceModule = document.getElementById("workspace-module");
 const workspaceStatus = document.getElementById("workspace-status");
@@ -108,6 +117,8 @@ let studySessionTaskAssignmentId = null;
 let activeStudySessionId = null;
 let activeStudySession = null;
 let studyTimerIntervalId = null;
+let reviewStudySessionId = null;
+let reviewStudySessionWasCompleted = false;
 
 function show(message) {
   output.textContent = message;
@@ -1543,10 +1554,126 @@ function startStudyTimerClock() {
   }
 }
 
+function resetStudySessionReview() {
+  reviewStudySessionId = null;
+  reviewStudySessionWasCompleted = false;
+  studySessionReviewTab.disabled = true;
+  studyReviewSessionName.textContent = "No session selected";
+  studyReviewDuration.textContent = "0s";
+  studyReviewSessionDate.textContent = "Not set";
+  studyReviewGoal.textContent = "No session goal added.";
+  studyReviewTaskCount.textContent = "0 tasks";
+  studyReviewNotesInput.value = "";
+  saveStudyReviewButton.disabled = true;
+  saveStudyReviewButton.textContent = "Save review and finish";
+  studyReviewTaskList.replaceChildren();
+
+  const emptyItem = document.createElement("li");
+  emptyItem.classList.add("task-list-message");
+  emptyItem.textContent =
+    "Finish a timed session to review its tasks.";
+  studyReviewTaskList.appendChild(emptyItem);
+}
+
+function renderStudySessionReview(session, linkedTasks, tasks) {
+  reviewStudySessionId = session.sessionId;
+  reviewStudySessionWasCompleted =
+    session.sessionStatus === "COMPLETED";
+  studySessionReviewTab.disabled = false;
+  studyReviewSessionName.textContent =
+    session.sessionName || "Study session";
+  studyReviewDuration.textContent =
+    formatDuration(getElapsedStudySeconds(session));
+  studyReviewSessionDate.textContent =
+    formatDisplayDate(session.sessionDate);
+  studyReviewGoal.textContent =
+    session.sessionGoal || "No session goal added.";
+  studyReviewNotesInput.value = session.sessionNotes || "";
+
+  const taskCount = linkedTasks.length;
+  studyReviewTaskCount.textContent =
+    `${taskCount} ${taskCount === 1 ? "task" : "tasks"}`;
+  studyReviewTaskList.replaceChildren();
+
+  if (taskCount === 0) {
+    const emptyItem = document.createElement("li");
+    emptyItem.classList.add("task-list-message");
+    emptyItem.textContent =
+      "No tasks are linked to this session. You can still add notes and finish it.";
+    studyReviewTaskList.appendChild(emptyItem);
+  }
+
+  for (const sessionTask of linkedTasks) {
+    const task = tasks.find(
+      taskItem => taskItem.taskId === sessionTask.taskId
+    );
+    const taskTitle = task?.taskTitle || "Linked task";
+    const item = document.createElement("li");
+    item.classList.add("study-review-task-item");
+    item.dataset.taskId = sessionTask.taskId;
+
+    const heading = document.createElement("h4");
+    heading.textContent = taskTitle;
+    item.appendChild(heading);
+
+    const outcomeChoices = document.createElement("fieldset");
+    outcomeChoices.classList.add("study-review-outcome-choices");
+
+    const legend = document.createElement("legend");
+    legend.classList.add("visually-hidden");
+    legend.textContent = `Outcome for ${taskTitle}`;
+    outcomeChoices.appendChild(legend);
+
+    for (const status of [
+      "COMPLETE",
+      "PARTIAL",
+      "INCOMPLETE"
+    ]) {
+      const choice = document.createElement("label");
+      choice.classList.add(
+        "study-review-outcome-choice",
+        `study-review-outcome-choice--${status.toLowerCase()}`
+      );
+
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = `study-review-outcome-${sessionTask.taskId}`;
+      input.value = status;
+      input.checked = sessionTask.outcomeStatus === status;
+
+      const label = document.createElement("span");
+      label.textContent = formatSessionValue(status);
+
+      choice.appendChild(input);
+      choice.appendChild(label);
+      outcomeChoices.appendChild(choice);
+    }
+
+    item.appendChild(outcomeChoices);
+
+    const outcomeLabel = document.createElement("label");
+    outcomeLabel.textContent = "Outcome note (optional)";
+
+    const outcomeInput = document.createElement("textarea");
+    outcomeInput.classList.add("study-review-task-note");
+    outcomeInput.dataset.reviewOutcomeNote = "";
+    outcomeInput.value = sessionTask.outcome || "";
+    outcomeInput.placeholder =
+      "Add a short note about this task";
+
+    outcomeLabel.appendChild(outcomeInput);
+    item.appendChild(outcomeLabel);
+    studyReviewTaskList.appendChild(item);
+  }
+
+  saveStudyReviewButton.disabled = false;
+}
+
 function resetStudyTimer() {
   stopStudyTimerClock();
   activeStudySessionId = null;
   activeStudySession = null;
+  resetStudySessionReview();
 
   studySessionTimerTab.disabled = true;
   activeStudySessionTitle.textContent = "No active session";
@@ -1805,9 +1932,19 @@ async function loadStudySessions(assignmentId) {
       completeButton.textContent = "Finish session";
       completeButton.addEventListener(
         "click",
-        () => completeStudySession(session.sessionId)
+        () => openStudySessionReview(session.sessionId)
       );
       controls.appendChild(completeButton);
+    } else {
+      const reviewButton = document.createElement("button");
+      reviewButton.type = "button";
+      reviewButton.classList.add("secondary-button");
+      reviewButton.textContent = "Review session";
+      reviewButton.addEventListener(
+        "click",
+        () => openStudySessionReview(session.sessionId)
+      );
+      controls.appendChild(reviewButton);
     }
 
     if (controls.childElementCount > 0) {
@@ -2109,20 +2246,104 @@ async function resumeStudySession(sessionId) {
   show("Study session resumed.");
 }
 
-async function completeStudySession(sessionId) {
+async function openStudySessionReview(sessionId) {
+  const sessionsResponse = await apiFetch(
+    `/api/assignments/${selectedAssignmentId}/study-sessions`
+  );
+
+  if (!sessionsResponse.ok) {
+    show(`${sessionsResponse.status} ${sessionsResponse.statusText}\n${await sessionsResponse.text()}`);
+    return;
+  }
+
+  const sessions = await sessionsResponse.json();
+  let session = sessions.find(
+    sessionItem => sessionItem.sessionId === sessionId
+  );
+
+  if (!session) {
+    show("The selected study session could not be found.");
+    return;
+  }
+
+  if (session.timerStatus === "RUNNING") {
+    const pauseResponse = await apiFetch(
+      `/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/pause`,
+      { method: "PATCH" }
+    );
+
+    if (!pauseResponse.ok) {
+      show(`${pauseResponse.status} ${pauseResponse.statusText}\n${await pauseResponse.text()}`);
+      return;
+    }
+
+    session = await pauseResponse.json();
+  }
+
+  const tasksResponse = await apiFetch(
+    `/api/assignments/${selectedAssignmentId}/tasks`
+  );
+
+  if (!tasksResponse.ok) {
+    show(`${tasksResponse.status} ${tasksResponse.statusText}\n${await tasksResponse.text()}`);
+    return;
+  }
+
+  const tasks = await tasksResponse.json();
+  const linkedTasks = await loadSessionTasks(
+    selectedAssignmentId,
+    sessionId
+  );
+
+  stopStudyTimerClock();
+  activeStudySession = session;
+  activeStudySessionId = sessionId;
+  renderStudySessionReview(session, linkedTasks, tasks);
+  setApplicationView("study-session");
+  setStudySessionTab("review");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+  show("Add your task outcomes and session notes.");
+}
+
+async function completeStudySession(
+  sessionId,
+  returnToWorkspace = false
+) {
   const response = await apiFetch(`/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/complete`, {
     method: "PATCH"
   });
 
   if (!response.ok) {
     show(`${response.status} ${response.statusText}\n${await response.text()}`);
-    return;
+    return false;
   }
 
   await loadStudySessions(selectedAssignmentId);
+  await loadTasks(selectedAssignmentId);
   await loadStudyHistory(selectedAssignmentId);
   await loadProgress(selectedAssignmentId);
-  show("Study session completed.");
+
+  if (returnToWorkspace) {
+    setWorkspaceTab("notes");
+    setApplicationView("workspace");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }
+
+  show(
+    returnToWorkspace
+      ? "Study session review saved."
+      : "Study session completed."
+  );
+  return true;
 }
 
 async function loadStudyHistory(assignmentId) {
@@ -2381,6 +2602,116 @@ async function saveTaskOutcome(sessionId, taskId, outcomeStatus, outcome) {
   await loadStudyHistory(selectedAssignmentId);
   await loadProgress(selectedAssignmentId);
   show("Task outcome saved.");
+}
+
+async function saveStudySessionReview() {
+  if (!reviewStudySessionId) {
+    return;
+  }
+
+  const taskItems = Array.from(
+    studyReviewTaskList.querySelectorAll(
+      ".study-review-task-item"
+    )
+  );
+  const taskOutcomes = [];
+
+  for (const item of taskItems) {
+    item.classList.remove("has-error");
+
+    const selectedOutcome = item.querySelector(
+      'input[type="radio"]:checked'
+    );
+
+    if (!selectedOutcome) {
+      item.classList.add("has-error");
+      item.querySelector('input[type="radio"]')?.focus();
+      show("Choose an outcome for every selected task.");
+      return;
+    }
+
+    const outcomeNote = item.querySelector(
+      "[data-review-outcome-note]"
+    );
+
+    taskOutcomes.push({
+      taskId: item.dataset.taskId,
+      outcomeStatus: selectedOutcome.value,
+      outcome: outcomeNote?.value || ""
+    });
+  }
+
+  const sessionId = reviewStudySessionId;
+  const sessionWasCompleted = reviewStudySessionWasCompleted;
+  const originalButtonText = saveStudyReviewButton.textContent;
+  saveStudyReviewButton.disabled = true;
+  saveStudyReviewButton.textContent = "Saving review…";
+
+  try {
+    for (const taskOutcome of taskOutcomes) {
+      const response = await apiFetch(
+        `/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/tasks/${taskOutcome.taskId}/outcome`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            outcomeStatus: taskOutcome.outcomeStatus,
+            outcome: taskOutcome.outcome
+          })
+        }
+      );
+
+      if (!response.ok) {
+        show(`${response.status} ${response.statusText}\n${await response.text()}`);
+        return;
+      }
+    }
+
+    const notesResponse = await apiFetch(
+      `/api/assignments/${selectedAssignmentId}/study-sessions/${sessionId}/notes`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sessionNotes: studyReviewNotesInput.value
+        })
+      }
+    );
+
+    if (!notesResponse.ok) {
+      show(`${notesResponse.status} ${notesResponse.statusText}\n${await notesResponse.text()}`);
+      return;
+    }
+
+    if (sessionWasCompleted) {
+      await loadTasks(selectedAssignmentId);
+      await loadStudySessions(selectedAssignmentId);
+      await loadStudyHistory(selectedAssignmentId);
+      await loadProgress(selectedAssignmentId);
+      setWorkspaceTab("notes");
+      setApplicationView("workspace");
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+
+      show("Study session review updated.");
+      return;
+    }
+
+    await completeStudySession(sessionId, true);
+  } finally {
+    saveStudyReviewButton.textContent = originalButtonText;
+
+    if (reviewStudySessionId === sessionId) {
+      saveStudyReviewButton.disabled = false;
+    }
+  }
 }
 
 
@@ -2954,9 +3285,14 @@ studyTimerResumeButton.addEventListener("click", () => {
 
 studyTimerFinishButton.addEventListener("click", () => {
   if (activeStudySessionId) {
-    completeStudySession(activeStudySessionId);
+    openStudySessionReview(activeStudySessionId);
   }
 });
+
+saveStudyReviewButton.addEventListener(
+  "click",
+  saveStudySessionReview
+);
 
 backFromStudySessionButton.addEventListener("click", async () => {
   setWorkspaceTab("notes");

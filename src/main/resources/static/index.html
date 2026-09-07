@@ -1117,7 +1117,107 @@
           aria-labelledby="study-session-review-tab"
           data-study-session-panel="review"
           hidden
-        ></section>
+        >
+          <div class="study-review-layout">
+            <div class="study-session-panel-heading">
+              <div>
+                <p class="section-kicker">Reflect and record</p>
+                <h2>Review your study session</h2>
+              </div>
+            </div>
+
+            <p class="section-supporting-text">
+              Record how each task went and add any notes before
+              completing the session.
+            </p>
+
+            <section
+              class="study-review-summary"
+              aria-labelledby="study-review-summary-heading"
+            >
+              <h3 id="study-review-summary-heading">
+                Session summary
+              </h3>
+
+              <dl class="study-review-summary-list">
+                <div>
+                  <dt>Session</dt>
+                  <dd id="study-review-session-name">
+                    No session selected
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>Duration</dt>
+                  <dd id="study-review-duration">0s</dd>
+                </div>
+
+                <div>
+                  <dt>Session date</dt>
+                  <dd id="study-review-session-date">Not set</dd>
+                </div>
+
+                <div>
+                  <dt>Goal</dt>
+                  <dd id="study-review-goal">
+                    No session goal added.
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            <section
+              class="study-review-tasks"
+              aria-labelledby="study-review-tasks-heading"
+            >
+              <div class="study-session-panel-heading">
+                <div>
+                  <p class="section-kicker">Selected tasks</p>
+                  <h3 id="study-review-tasks-heading">
+                    Record your outcomes
+                  </h3>
+                </div>
+
+                <span
+                  id="study-review-task-count"
+                  class="study-timer-task-count"
+                >
+                  0 tasks
+                </span>
+              </div>
+
+              <ul
+                id="study-review-task-list"
+                class="study-review-task-list"
+              >
+                <li class="task-list-message">
+                  Finish a timed session to review its tasks.
+                </li>
+              </ul>
+            </section>
+
+            <div class="study-review-notes">
+              <label for="study-review-notes-input">
+                Session notes
+              </label>
+
+              <textarea
+                id="study-review-notes-input"
+                placeholder="What went well, and what should you focus on next?"
+              ></textarea>
+            </div>
+
+            <div class="study-review-actions">
+              <button
+                id="save-study-review-button"
+                type="button"
+                disabled
+              >
+                Save review and finish
+              </button>
+            </div>
+          </div>
+        </section>
       </section>
 
       <nav class="primary-navigation" aria-label="Primary navigation">
