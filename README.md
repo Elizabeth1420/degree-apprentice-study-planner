@@ -66,3 +66,65 @@ The current version uses deterministic, rule-based text analysis to demonstrate 
 8. The student starts, pauses, resumes and finishes the study timer.
 9. Task outcomes and session notes are recorded during the review stage.
 10. The Progress & History dashboard summarises completed tasks, study time and previous sessions.
+
+
+## Running the Project Locally
+
+### Prerequisites
+
+Before running the application, install or configure:
+
+- Java 17
+- Git
+- A PostgreSQL database
+- A Supabase project for student authentication
+
+Maven does not need to be installed separately because the repository includes the Maven Wrapper.
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/Elizabeth1420/degree-apprentice-study-planner.git
+cd degree-apprentice-study-planner
+```
+
+### Configure the Database
+
+Create this local-only file:
+
+```text
+src/main/resources/application-local.properties
+```
+
+Add your own database connection values:
+
+```properties
+spring.datasource.url=YOUR_DATABASE_URL
+spring.datasource.username=YOUR_DATABASE_USERNAME
+spring.datasource.password=YOUR_DATABASE_PASSWORD
+```
+
+Replace these placeholders locally with your real values. 
+
+The local properties file is excluded by `.gitignore` and must not be committed.
+
+### Start the Application
+
+On macOS or Linux:
+
+```bash
+SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:SPRING_PROFILES_ACTIVE="local"
+.\mvnw.cmd spring-boot:run
+```
+
+Open the application at:
+
+```text
+http://localhost:8080
+```
