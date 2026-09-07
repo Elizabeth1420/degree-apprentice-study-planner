@@ -24,7 +24,9 @@ const authModeHeading = document.getElementById("auth-mode-heading");
 const authSubmitButton = document.getElementById("auth-submit-button");
 const authSwitchMessage = document.getElementById("auth-switch-message");
 const authSwitchButton = document.getElementById("auth-switch-button");
+const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
+const authFeedback = document.getElementById("auth-feedback");
 const assignmentForm = document.getElementById("assignment-form");
 const assignmentCreatePanel = document.getElementById("assignment-create-panel");
 const toggleAssignmentFormButton = document.getElementById("toggle-assignment-form-button");
@@ -138,8 +140,19 @@ function show(message) {
   output.textContent = message;
 }
 
+function setAuthFeedback(message = "") {
+  authFeedback.textContent = message;
+  authFeedback.hidden = !message;
+
+  if (!message) {
+    emailInput.removeAttribute("aria-invalid");
+    passwordInput.removeAttribute("aria-invalid");
+  }
+}
+
 function setAuthMode(mode) {
   authMode = mode;
+  setAuthFeedback();
 
   const isSignUp = mode === "sign-up";
 
@@ -3190,10 +3203,11 @@ authSwitchButton.addEventListener("click", () => {
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const email = document.getElementById("email").value.trim();
+  const email = emailInput.value.trim();
   const password = passwordInput.value;
   const isCreatingAccount = authMode === "sign-up";
 
+  setAuthFeedback();
   authSubmitButton.disabled = true;
   authSubmitButton.textContent = isCreatingAccount
     ? "Creating account..."
@@ -3207,7 +3221,7 @@ loginForm.addEventListener("submit", async (event) => {
       });
 
       if (error) {
-        show(`Sign up failed: ${error.message}`);
+        setAuthFeedback(`We could not create your account: ${error.message}`);
         return;
       }
 
@@ -3237,7 +3251,21 @@ loginForm.addEventListener("submit", async (event) => {
       });
 
     if (error) {
-      show(`Log in failed: ${error.message}`);
+      const invalidCredentials = error.message
+        .toLowerCase()
+        .includes("invalid login credentials");
+
+      setAuthFeedback(
+        invalidCredentials
+          ? "The email address or password is incorrect. Please check your details and try again."
+          : `We could not log you in: ${error.message}`
+      );
+
+      if (invalidCredentials) {
+        emailInput.setAttribute("aria-invalid", "true");
+        passwordInput.setAttribute("aria-invalid", "true");
+      }
+
       return;
     }
 
@@ -3247,13 +3275,21 @@ loginForm.addEventListener("submit", async (event) => {
       "Logged in successfully."
     );
   } catch (error) {
-    show(`Authentication failed: ${error.message}`);
+    setAuthFeedback(
+      "We could not contact the authentication service. Please check your connection and try again."
+    );
   } finally {
     authSubmitButton.disabled = false;
     authSubmitButton.textContent =
       authMode === "sign-up"
         ? "Create account"
         : "Log in";
+  }
+});
+
+loginForm.addEventListener("input", () => {
+  if (!authFeedback.hidden) {
+    setAuthFeedback();
   }
 });
 
