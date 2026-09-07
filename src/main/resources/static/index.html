@@ -498,34 +498,63 @@
                 <p class="section-kicker">Study planning</p>
                 <h2>Study sessions and notes</h2>
               </div>
+
+              <button
+                id="open-study-session-button"
+                type="button"
+              >
+                Plan a study session
+              </button>
             </div>
 
-            <form id="study-session-form">
-              <input
-                id="session-name"
-                placeholder="Session name"
-              >
+            <p class="section-supporting-text">
+              Create a focused session, choose approved tasks and
+              track your study time.
+            </p>
 
-              <input
-                id="session-date"
-                type="date"
-                required
-              >
+            <dl
+              class="study-planning-summary"
+              aria-label="Study session summary"
+            >
+              <div class="study-planning-summary-card">
+                <dt>Planned</dt>
+                <dd id="planned-study-session-count">0</dd>
+              </div>
 
-              <textarea
-                id="session-goal"
-                placeholder="Session goal"
-              ></textarea>
+              <div class="study-planning-summary-card">
+                <dt>Active</dt>
+                <dd id="active-study-session-count">0</dd>
+              </div>
 
-              <button type="submit">
-                Create study session
-              </button>
-            </form>
+              <div class="study-planning-summary-card">
+                <dt>Completed</dt>
+                <dd id="completed-study-session-count">0</dd>
+              </div>
+            </dl>
 
-            <ul id="study-session-list"></ul>
+            <section
+              class="study-planning-history-section"
+              aria-labelledby="study-planning-history-heading"
+            >
+              <div class="section-heading-row">
+                <div>
+                  <p class="section-kicker">Study activity</p>
+                  <h3 id="study-planning-history-heading">
+                    Session history
+                  </h3>
+                </div>
 
-            <h3>Study history</h3>
-            <div id="study-history"></div>
+                <p class="study-planning-total-time">
+                  Total study time:
+                  <strong id="study-planning-total-time">0s</strong>
+                </p>
+              </div>
+
+              <div
+                id="study-history"
+                class="study-planning-history"
+              ></div>
+            </section>
           </section>
         </section>
 
@@ -751,6 +780,344 @@
             </button>
           </form>
         </section>
+      </section>
+
+      <section
+        id="study-session-section"
+        class="study-session-screen"
+        aria-labelledby="study-session-heading"
+        hidden
+      >
+        <header class="study-session-header">
+          <button
+            id="back-from-study-session-button"
+            class="secondary-button"
+            type="button"
+          >
+            ← Back to Workspace
+          </button>
+
+          <div class="study-session-header-copy">
+            <p class="app-kicker">Focused study</p>
+            <h1 id="study-session-heading">Study Session</h1>
+          </div>
+        </header>
+
+        <section
+          class="study-session-assignment-summary"
+          aria-labelledby="study-session-assignment-title"
+        >
+          <div>
+            <p class="section-kicker">Linked assignment</p>
+            <h2 id="study-session-assignment-title">
+              Selected assignment
+            </h2>
+            <p
+              id="study-session-module"
+              class="study-session-module"
+            ></p>
+          </div>
+
+          <p class="study-session-guidance">
+            Set a clear goal and choose the approved tasks you want
+            to work on during this session.
+          </p>
+        </section>
+
+        <div
+          class="study-session-tabs"
+          role="tablist"
+          aria-label="Study session stages"
+        >
+          <button
+            id="study-session-plan-tab"
+            class="study-session-tab-button is-active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="study-session-plan-panel"
+            data-study-session-tab="plan"
+          >
+            Plan
+          </button>
+
+          <button
+            id="study-session-timer-tab"
+            class="study-session-tab-button"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="study-session-timer-panel"
+            data-study-session-tab="timer"
+            disabled
+          >
+            Timer
+          </button>
+
+          <button
+            id="study-session-review-tab"
+            class="study-session-tab-button"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="study-session-review-panel"
+            data-study-session-tab="review"
+            disabled
+          >
+            Review
+          </button>
+        </div>
+
+        <section
+          id="study-session-plan-panel"
+          class="study-session-tab-panel"
+          role="tabpanel"
+          aria-labelledby="study-session-plan-tab"
+          data-study-session-panel="plan"
+        >
+          <div class="study-session-panel-heading">
+            <div>
+              <p class="section-kicker">Plan your focus</p>
+              <h2>Create a study session</h2>
+            </div>
+          </div>
+
+          <p class="section-supporting-text">
+            Add the session details, then choose work from your
+            approved task pool.
+          </p>
+
+          <form
+            id="study-session-form"
+            class="study-session-plan-form"
+          >
+            <div class="study-session-form-grid">
+              <label for="session-name">
+                Session name
+              </label>
+
+              <input
+                id="session-name"
+                placeholder="For example, Research and analysis"
+              >
+
+              <label for="session-date">
+                Session date
+              </label>
+
+              <input
+                id="session-date"
+                type="date"
+                required
+              >
+
+              <label for="session-goal">
+                Session goal
+              </label>
+
+              <textarea
+                id="session-goal"
+                placeholder="What would you like to achieve?"
+              ></textarea>
+            </div>
+
+            <fieldset class="study-session-task-picker">
+              <legend>Select from your approved task pool</legend>
+
+              <label
+                class="visually-hidden"
+                for="study-session-task-search"
+              >
+                Search approved tasks
+              </label>
+
+              <input
+                id="study-session-task-search"
+                type="search"
+                placeholder="Search approved tasks"
+              >
+
+              <ul
+                id="study-session-task-pool"
+                class="study-session-task-pool"
+              >
+                <li class="task-list-message">
+                  Approved tasks will appear here.
+                </li>
+              </ul>
+            </fieldset>
+
+            <button
+              class="study-session-create-button"
+              type="submit"
+            >
+              Create study session
+            </button>
+          </form>
+
+          <section
+            class="planned-study-sessions"
+            aria-labelledby="planned-study-sessions-heading"
+          >
+            <div class="study-session-panel-heading">
+              <div>
+                <p class="section-kicker">Your sessions</p>
+                <h2 id="planned-study-sessions-heading">
+                  Planned study sessions
+                </h2>
+              </div>
+            </div>
+
+            <ul id="study-session-list"></ul>
+          </section>
+        </section>
+
+        <section
+          id="study-session-timer-panel"
+          class="study-session-tab-panel"
+          role="tabpanel"
+          aria-labelledby="study-session-timer-tab"
+          data-study-session-panel="timer"
+          hidden
+        >
+          <div class="study-timer-layout">
+            <div
+              class="study-timer-clock"
+              role="timer"
+              aria-label="Elapsed study time"
+            >
+              <span class="study-timer-label">Elapsed time</span>
+              <strong id="study-session-elapsed-time">
+                00:00:00
+              </strong>
+            </div>
+
+            <section
+              class="study-timer-session-summary"
+              aria-labelledby="active-study-session-title"
+            >
+              <p class="section-kicker">Active session</p>
+              <h2 id="active-study-session-title">
+                No active session
+              </h2>
+              <p
+                id="active-study-session-goal"
+                class="study-timer-goal"
+              >
+                Start a planned session to begin tracking time.
+              </p>
+            </section>
+
+            <section
+              class="study-timer-progress"
+              aria-labelledby="study-timer-progress-heading"
+            >
+              <div class="study-timer-progress-copy">
+                <h3 id="study-timer-progress-heading">
+                  Task progress
+                </h3>
+                <span id="study-timer-progress-count">
+                  0 of 0 complete
+                </span>
+                <strong id="study-timer-progress-percentage">
+                  0%
+                </strong>
+              </div>
+
+              <div
+                id="study-timer-progress-track"
+                class="study-timer-progress-track"
+                role="progressbar"
+                aria-label="Selected task completion"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                <span
+                  id="study-timer-progress-fill"
+                  class="study-timer-progress-fill"
+                ></span>
+              </div>
+            </section>
+
+            <section
+              class="study-timer-selected-tasks"
+              aria-labelledby="study-timer-tasks-heading"
+            >
+              <div class="study-session-panel-heading">
+                <div>
+                  <p class="section-kicker">Session focus</p>
+                  <h2 id="study-timer-tasks-heading">
+                    Selected tasks
+                  </h2>
+                </div>
+
+                <span
+                  id="study-timer-task-count"
+                  class="study-timer-task-count"
+                >
+                  0 tasks
+                </span>
+              </div>
+
+              <ul
+                id="study-timer-task-list"
+                class="study-timer-task-list"
+              >
+                <li class="task-list-message">
+                  No tasks are linked to the active session.
+                </li>
+              </ul>
+            </section>
+
+            <div
+              class="study-timer-controls"
+              aria-label="Study timer controls"
+            >
+              <button
+                id="study-timer-start-button"
+                type="button"
+                disabled
+              >
+                Start
+              </button>
+
+              <button
+                id="study-timer-pause-button"
+                type="button"
+                disabled
+              >
+                Pause
+              </button>
+
+              <button
+                id="study-timer-resume-button"
+                type="button"
+                disabled
+              >
+                Resume
+              </button>
+
+              <button
+                id="study-timer-finish-button"
+                class="secondary-button"
+                type="button"
+                disabled
+              >
+                Finish session
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="study-session-review-panel"
+          class="study-session-tab-panel"
+          role="tabpanel"
+          aria-labelledby="study-session-review-tab"
+          data-study-session-panel="review"
+          hidden
+        ></section>
       </section>
 
       <nav class="primary-navigation" aria-label="Primary navigation">
