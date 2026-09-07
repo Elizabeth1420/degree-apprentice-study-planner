@@ -6,3 +6,18 @@ Students can upload assignment briefs, extract important requirements, review AI
 
 **Prototype note:** 
 The current version uses deterministic, rule-based text analysis to demonstrate AI-assisted assignment planning. A future version could integrate a generative AI service for more flexible and context-aware analysis.
+
+
+## Key Features
+
+- Secure student authentication and protected application data
+- Assignment creation, editing and deadline management
+- Assignment brief upload and text extraction
+- Rule-based extraction of requirements and assessment information
+- AI-assisted task suggestions with approval and rejection controls
+- Manual creation of student-approved tasks
+- Detailed task review showing the original source from the brief
+- Study-session planning with approved task selection
+- Study timer with start, pause, resume and finish controls
+- Session review with task outcomes and study notes
+- Progress dashboard showing task activity, study time and session history
