@@ -196,3 +196,9 @@ src/
 │       └── application.properties
 └── test/                   Automated service tests
 ```
+
+## Academic Context
+
+This project was developed by Elizabeth Adeleke as the practical prototype for the COM6036 Digital Innovation module.
+
+The prototype explores how digital innovation can support degree apprentices with assignment interpretation, task organisation, focused study and progress monitoring. Human oversight is retained throughout the AI-assisted workflow because generated task suggestions must be reviewed and either approved or rejected by the student before they can be used in a study session.
