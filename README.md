@@ -1,4 +1,4 @@
-# degree-apprentice-study-planner
+# Study Planner
 
 Study Planner is a full-stack web application developed for the COM6036 Digital Innovation project. It is designed to help degree apprentices organise assignments, understand assessment requirements, manage tasks and monitor their study activity.
 
@@ -201,4 +201,5 @@ src/
 
 This project was developed by Elizabeth Adeleke as the practical prototype for the COM6036 Digital Innovation module.
 
-The prototype explores how digital innovation can support degree apprentices with assignment interpretation, task organisation, focused study and progress monitoring. Human oversight is retained throughout the AI-assisted workflow because generated task suggestions must be reviewed and either approved or rejected by the student before they can be used in a study session.
+ **Prototype note:** 
+ The current version uses deterministic, rule-based text analysis to demonstrate AI-assisted assignment planning. A future version could integrate a generative AI service for more flexible and context-aware analysis. Human oversight is retained throughout the AI-assisted workflow because generated task suggestions must be reviewed and either approved or rejected by the student before they can be used in a study session.
