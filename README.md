@@ -152,3 +152,22 @@ Open the application at:
 ```text
 http://localhost:8080
 ```
+
+## Current Limitations and Future Development
+
+This application is an academic prototype developed to demonstrate the proposed study-planning workflow. Its current limitations include:
+
+- Assignment analysis is deterministic and rule-based rather than connected to a generative AI model.
+- Extraction works best when assignment briefs contain recognisable headings, numbered lists or lettered deliverables.
+- The quality of generated tasks depends on the structure and text quality of the uploaded brief.
+- The application currently runs locally and has not been configured for production deployment.
+- User testing has been limited to the prototype development process.
+
+Potential future improvements include:
+
+- Integration with a generative AI API for context-aware requirement and task generation
+- Support for additional document formats and scanned documents using OCR
+- Calendar integration, reminders and deadline notifications
+- More detailed progress analytics and study recommendations
+- Expanded usability, accessibility, security and performance testing
+- Production deployment with managed environment variables and monitoring
