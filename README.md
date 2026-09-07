@@ -21,3 +21,34 @@ The current version uses deterministic, rule-based text analysis to demonstrate 
 - Study timer with start, pause, resume and finish controls
 - Session review with task outcomes and study notes
 - Progress dashboard showing task activity, study time and session history
+
+## Technology Stack
+
+### Front End
+
+- HTML5
+- CSS3
+- JavaScript (ES6+), without a front-end framework
+- Supabase JavaScript client for authentication
+
+### Back End
+
+- Java 17
+- Spring Boot
+- Spring Web MVC
+- Spring Data JPA
+- Spring Security with JWT authentication
+- Maven
+
+### Data and Document Processing
+
+- PostgreSQL database
+- Supabase authentication
+- Apache PDFBox for PDF text extraction
+- Apache POI for Microsoft Word document extraction
+
+### Testing
+
+- JUnit 5
+- Mockito
+- Spring Boot testing support
