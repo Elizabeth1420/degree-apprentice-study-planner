@@ -53,6 +53,30 @@ The current version uses deterministic, rule-based text analysis to demonstrate 
 - Mockito
 - Spring Boot testing support
 
+## Running the Tests
+
+Automated tests cover:
+
+- Assignment brief section extraction
+- Numbered and lettered deliverable extraction
+- Generation of clearer assignment tasks
+- Prevention of duplicate generated tasks
+- Preservation of approved, rejected, completed and student-created tasks during regeneration
+
+Run the focused analysis and task-generation tests with:
+
+```bash
+./mvnw -Dtest=BriefAnalysisServiceTests,AssignmentAnalysisServiceTests,StudyTaskServiceTests test
+```
+
+Eight focused tests were passing at the completion of the prototype.
+
+To run the complete test suite using the local database configuration:
+
+```bash
+SPRING_PROFILES_ACTIVE=local ./mvnw test
+```
+
 
 ## Application Workflow
 
