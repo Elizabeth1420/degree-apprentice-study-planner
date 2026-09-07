@@ -4,6 +4,7 @@ import com.elizabethadeleke.study_planner_backend.sessiontask.SessionTaskReposit
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -58,24 +59,21 @@ public class StudyTaskService {
         Assignment assignment = assignmentService.getAssignment(userId, assignmentId);
 
         List<StudyTask> existingTasks = studyTaskRepository.findByAssignmentIdOrderByCreatedAtAsc(assignmentId);
+        List<Requirement> requirements = requirementService.listRequirements(userId, assignmentId);
+        List<TaskSuggestion> suggestions = assignmentAnalysisService.analyseAssignment(assignment).tasks();
+        TaskGenerationPlan generationPlan = buildGenerationPlan(existingTasks, suggestions);
 
-        if (!existingTasks.isEmpty()) {
-            return existingTasks;
+        for (StudyTask obsoleteTask : generationPlan.obsoleteTasks()) {
+            sessionTaskRepository.deleteByTaskId(obsoleteTask.getTaskId());
+            studyTaskRepository.delete(obsoleteTask);
         }
 
-        List<Requirement> requirements = requirementService.listRequirements(userId, assignmentId);
+        List<StudyTask> newTasks = new ArrayList<>();
 
-        studyTaskRepository.deleteByAssignmentIdAndOrigin(assignmentId, AI);
+        for (TaskSuggestion suggestion : generationPlan.newSuggestions()) {
+            Requirement matchingRequirement = findMatchingRequirement(requirements, suggestion);
 
-        List<StudyTask> tasks = new ArrayList<>();
-
-        for (TaskSuggestion suggestion : assignmentAnalysisService.analyseAssignment(assignment).tasks()) {
-            Requirement matchingRequirement = requirements.stream()
-                    .filter(requirement -> requirement.getSourceSection().equals(suggestion.sourceSection()))
-                    .findFirst()
-                    .orElse(null);
-
-            tasks.add(new StudyTask(
+            newTasks.add(new StudyTask(
                     assignmentId,
                     matchingRequirement == null ? null : matchingRequirement.getRequirementId(),
                     suggestion.taskTitle(),
@@ -83,7 +81,69 @@ public class StudyTaskService {
                     suggestion.sourcePassage()));
         }
 
-        return studyTaskRepository.saveAll(tasks);
+        if (!newTasks.isEmpty()) {
+            studyTaskRepository.saveAll(newTasks);
+        }
+
+        return studyTaskRepository.findByAssignmentIdOrderByCreatedAtAsc(assignmentId);
+    }
+
+    static TaskGenerationPlan buildGenerationPlan(
+            List<StudyTask> existingTasks,
+            List<TaskSuggestion> currentSuggestions) {
+
+        if (currentSuggestions.isEmpty()) {
+            return new TaskGenerationPlan(List.of(), List.of());
+        }
+
+        List<StudyTask> obsoleteTasks = existingTasks.stream()
+                .filter(task -> AI.equals(task.getOrigin()))
+                .filter(task -> SUGGESTED.equals(task.getApprovalStatus()))
+                .filter(task -> currentSuggestions.stream()
+                        .noneMatch(suggestion -> matchesSuggestion(task, suggestion)))
+                .toList();
+
+        List<TaskSuggestion> newSuggestions = currentSuggestions.stream()
+                .filter(suggestion -> existingTasks.stream()
+                        .noneMatch(task -> matchesSuggestion(task, suggestion)))
+                .toList();
+
+        return new TaskGenerationPlan(obsoleteTasks, newSuggestions);
+    }
+
+    private Requirement findMatchingRequirement(
+            List<Requirement> requirements,
+            TaskSuggestion suggestion) {
+
+        return requirements.stream()
+                .filter(requirement -> sameText(requirement.getSourceSection(), suggestion.sourceSection()))
+                .filter(requirement -> sameText(requirement.getSourcePassage(), suggestion.sourcePassage()))
+                .findFirst()
+                .orElseGet(() -> requirements.stream()
+                        .filter(requirement -> sameText(requirement.getSourceSection(), suggestion.sourceSection()))
+                        .findFirst()
+                        .orElse(null));
+    }
+
+    private static boolean matchesSuggestion(StudyTask task, TaskSuggestion suggestion) {
+        return AI.equals(task.getOrigin())
+                && sameText(task.getTaskTitle(), suggestion.taskTitle())
+                && sameText(task.getSourcePassage(), suggestion.sourcePassage());
+    }
+
+    private static boolean sameText(String first, String second) {
+        return normaliseText(first).equals(normaliseText(second));
+    }
+
+    private static String normaliseText(String value) {
+        return value == null
+                ? ""
+                : value.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    record TaskGenerationPlan(
+            List<StudyTask> obsoleteTasks,
+            List<TaskSuggestion> newSuggestions) {
     }
 
     @Transactional

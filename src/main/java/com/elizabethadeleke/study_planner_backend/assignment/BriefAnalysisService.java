@@ -38,12 +38,7 @@ public class BriefAnalysisService {
         extractAssignmentWeighting(assignment, flatText);
         extractOfficialDeadline(assignment, briefText, flatText);
 
-        setIfPresent(assignment::setAssignmentTask, extractSection(briefText,
-                "Assignment\\s+task",
-                "Your\\s+submission\\s+should\\s+include",
-                "Getting\\s+Support",
-                "This\\s+assignment\\s+has\\s+been\\s+designed",
-                "Categorical\\s+Mark\\s+and\\s+Grade"));
+        setIfPresent(assignment::setAssignmentTask, extractCoreAssignmentTask(briefText));
 
         setIfPresent(assignment::setAssessmentCriteria, extractAssessmentCriteria(briefText));
         setIfPresent(assignment::setLearningOutcomesKsbs, extractLearningOutcomesAndKsbs(briefText));
@@ -185,6 +180,20 @@ private Optional<LocalDate> parseDate(String value, DateTimeFormatter formatter)
                 "Before\\s+submission\\s+checklist");
     }
 
+    private Optional<String> extractCoreAssignmentTask(String text) {
+        return extractSection(text,
+                "Assignment\\s+task",
+                "Suggested\\s+(?:Real[-\\s]?world\\s+)?Problem\\s+Domains",
+                "Suggested\\s+(?:Topics|Project\\s+Ideas|Examples)",
+                "Example\\s+(?:Topics|Projects|Domains)",
+                "Optional\\s+(?:Topics|Project\\s+Ideas|Examples)",
+                "Your\\s+submission\\s+should\\s+include",
+                "Getting\\s+Support",
+                "This\\s+assignment\\s+has\\s+been\\s+designed",
+                "Categorical\\s+Mark\\s+and\\s+Grade")
+                .map(this::normaliseExtractedSection);
+    }
+
     private Optional<String> extractLearningOutcomesAndKsbs(String text) {
         Optional<String> learningOutcomes = extractSection(text,
                 "This\\s+assignment\\s+has\\s+been\\s+designed\\s+to\\s+provide\\s+you\\s+with\\s+an\\s+opportunity\\s+to\\s+demonstrate\\s+your\\s+achievement\\s+of\\s+the\\s+following\\s+module\\s+learning\\s+outcomes",
@@ -244,6 +253,15 @@ private Optional<LocalDate> parseDate(String value, DateTimeFormatter formatter)
         }
 
         return Optional.of(value.trim().replaceAll("[ \\t]+", " "));
+    }
+
+    private String normaliseExtractedSection(String value) {
+        return value
+                .replace("\r\n", "\n")
+                .replace('\r', '\n')
+                .replaceAll("(?m)[ \\t]+$", "")
+                .replaceAll("\n{3,}", "\n\n")
+                .trim();
     }
 
     private void setIfPresent(Consumer<String> setter, Optional<String> value) {

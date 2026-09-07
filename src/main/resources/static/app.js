@@ -48,6 +48,12 @@ const taskReviewAssignmentTitle = document.getElementById("task-review-assignmen
 const taskReviewModule = document.getElementById("task-review-module");
 const taskReviewTabButtons = Array.from(document.querySelectorAll("[data-task-review-tab]"));
 const taskReviewTabPanels = Array.from(document.querySelectorAll("[data-task-review-panel]"));
+const taskDetailsDialog = document.getElementById("task-details-dialog");
+const closeTaskDetailsDialogButton = document.getElementById("close-task-details-dialog-button");
+const taskDetailsDialogTitle = document.getElementById("task-details-dialog-title");
+const taskDetailsDialogDescription = document.getElementById("task-details-dialog-description");
+const taskDetailsDialogSource = document.getElementById("task-details-dialog-source");
+const taskDetailsDialogMetadata = document.getElementById("task-details-dialog-metadata");
 const studySessionSection = document.getElementById("study-session-section");
 const openStudySessionButton = document.getElementById("open-study-session-button");
 const backFromStudySessionButton = document.getElementById("back-from-study-session-button");
@@ -1471,6 +1477,17 @@ async function loadTasks(assignmentId) {
     const actions = document.createElement("div");
     actions.classList.add("task-actions");
 
+    const detailsButton = document.createElement("button");
+    detailsButton.type = "button";
+    detailsButton.classList.add("task-details-button");
+    detailsButton.textContent = "See full details";
+    detailsButton.addEventListener(
+      "click",
+      () => openTaskDetails(task)
+    );
+
+    actions.appendChild(detailsButton);
+
     if (task.approvalStatus === "SUGGESTED") {
       const approveButton = document.createElement("button");
       approveButton.type = "button";
@@ -1543,6 +1560,48 @@ async function loadTasks(assignmentId) {
 
     tasksList.appendChild(item);
   }
+}
+
+function openTaskDetails(task) {
+  const approvalStatus =
+    String(task.approvalStatus || "SUGGESTED").toLowerCase();
+
+  taskDetailsDialogTitle.textContent =
+    task.taskTitle || "Untitled task";
+  taskDetailsDialogDescription.textContent =
+    task.taskDescription || "No additional task description was provided.";
+  taskDetailsDialogSource.textContent =
+    task.sourcePassage || "No source passage was recorded for this task.";
+
+  taskDetailsDialogMetadata.replaceChildren();
+
+  const metadataValues = [
+    {
+      className: "task-badge--origin",
+      label: task.origin === "AI" ? "AI generated" : "Student-created"
+    },
+    {
+      className: `task-badge--${String(task.taskStatus || "TO_DO").toLowerCase()}`,
+      label: formatTaskStatus(task.taskStatus)
+    },
+    {
+      className: `task-badge--${approvalStatus}`,
+      label: {
+        suggested: "Awaiting review",
+        approved: "Approved",
+        rejected: "Rejected"
+      }[approvalStatus] || task.approvalStatus
+    }
+  ];
+
+  for (const metadataValue of metadataValues) {
+    const badge = document.createElement("span");
+    badge.classList.add("task-badge", metadataValue.className);
+    badge.textContent = metadataValue.label;
+    taskDetailsDialogMetadata.appendChild(badge);
+  }
+
+  taskDetailsDialog.showModal();
 }
 
 async function approveTask(taskId) {
@@ -3636,6 +3695,16 @@ refreshTaskReviewButton.addEventListener("click", async () => {
     await loadTasks(selectedAssignmentId);
   } finally {
     refreshTaskReviewButton.disabled = false;
+  }
+});
+
+closeTaskDetailsDialogButton.addEventListener("click", () => {
+  taskDetailsDialog.close();
+});
+
+taskDetailsDialog.addEventListener("click", event => {
+  if (event.target === taskDetailsDialog) {
+    taskDetailsDialog.close();
   }
 });
 

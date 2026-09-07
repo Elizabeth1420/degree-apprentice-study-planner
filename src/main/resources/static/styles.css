@@ -486,6 +486,18 @@ button[data-action="reject"] {
   padding: 10px 16px;
 }
 
+.task-actions .task-details-button {
+  border-color: var(--line);
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.task-actions .task-details-button:hover:not(:disabled) {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: var(--accent-dark);
+}
+
 .task-actions .task-decision-indicator--approved:disabled {
   border-color: #86efac;
   background: #f0fdf4;
@@ -496,6 +508,63 @@ button[data-action="reject"] {
   border-color: #fca5a5;
   background: #fef2f2;
   color: #991b1b;
+}
+
+.task-details-dialog {
+  width: min(760px, calc(100% - 32px));
+  max-height: calc(100vh - 40px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--ink);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+}
+
+.task-details-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(3px);
+}
+
+.task-details-dialog-content {
+  display: grid;
+  gap: 20px;
+  max-height: calc(100vh - 42px);
+  padding: 28px;
+  overflow-y: auto;
+}
+
+.task-details-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.task-details-dialog-header h2,
+.task-details-dialog-section h3,
+.task-details-dialog-section,
+.task-details-dialog-section p {
+  margin: 0;
+}
+
+.task-details-dialog-section {
+  display: grid;
+  gap: 10px;
+}
+
+.task-details-dialog-section p {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.task-details-source {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+  white-space: pre-wrap;
 }
 
 #manual-task-form.manual-task-review-form {
@@ -544,6 +613,25 @@ button[data-action="reject"] {
 
   .task-actions button {
     flex: 1 1 140px;
+  }
+
+  .task-details-dialog {
+    width: calc(100% - 20px);
+    max-height: calc(100vh - 20px);
+  }
+
+  .task-details-dialog-content {
+    max-height: calc(100vh - 22px);
+    padding: 20px;
+  }
+
+  .task-details-dialog-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .task-details-dialog-header button {
+    width: 100%;
   }
 }
 

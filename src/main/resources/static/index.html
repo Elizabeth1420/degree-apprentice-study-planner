@@ -830,6 +830,49 @@
           <ul id="tasks-list" class="task-review-list"></ul>
         </section>
 
+        <dialog
+          id="task-details-dialog"
+          class="task-details-dialog"
+          aria-labelledby="task-details-dialog-title"
+          aria-describedby="task-details-dialog-description"
+        >
+          <div class="task-details-dialog-content">
+            <header class="task-details-dialog-header">
+              <div>
+                <p class="section-kicker">Task review</p>
+                <h2 id="task-details-dialog-title">Task details</h2>
+              </div>
+
+              <button
+                id="close-task-details-dialog-button"
+                class="secondary-button"
+                type="button"
+              >
+                Close
+              </button>
+            </header>
+
+            <div
+              id="task-details-dialog-metadata"
+              class="task-card-metadata"
+              aria-label="Task status"
+            ></div>
+
+            <section class="task-details-dialog-section">
+              <h3>What you are approving</h3>
+              <p id="task-details-dialog-description"></p>
+            </section>
+
+            <section class="task-details-dialog-section">
+              <h3>Source from the assignment brief</h3>
+              <p
+                id="task-details-dialog-source"
+                class="task-details-source"
+              ></p>
+            </section>
+          </div>
+        </dialog>
+
         <section
           id="manual-task-panel"
           class="task-review-tab-panel"
