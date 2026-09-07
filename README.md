@@ -171,3 +171,28 @@ Potential future improvements include:
 - More detailed progress analytics and study recommendations
 - Expanded usability, accessibility, security and performance testing
 - Production deployment with managed environment variables and monitoring
+
+
+
+## Project Structure
+
+```text
+src/
+├── main/
+│   ├── java/com/elizabethadeleke/study_planner_backend/
+│   │   ├── analysis/       Assignment analysis and task suggestions
+│   │   ├── assignment/     Assignment management and brief extraction
+│   │   ├── progress/       Progress calculations and summaries
+│   │   ├── requirement/    Extracted assignment requirements
+│   │   ├── sessiontask/    Tasks linked to study sessions
+│   │   ├── studysession/   Study-session planning and timing
+│   │   ├── task/           Task approval and completion workflow
+│   │   └── user/           Student profile management
+│   └── resources/
+│       ├── static/
+│       │   ├── index.html  Application interface
+│       │   ├── app.js      Front-end behaviour and API communication
+│       │   └── styles.css  Responsive interface styling
+│       └── application.properties
+└── test/                   Automated service tests
+```
