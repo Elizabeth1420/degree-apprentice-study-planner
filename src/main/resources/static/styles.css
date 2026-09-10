@@ -272,6 +272,21 @@ button[data-action="reject"] {
   word-break: break-word;
 }
 
+.detail-card--preview {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.detail-preview {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.detail-read-more {
+  margin-top: 14px;
+}
+
 @media (max-width: 760px) {
   .detail-card--wide {
     grid-column: 1 / -1;
@@ -567,6 +582,15 @@ button[data-action="reject"] {
   white-space: pre-wrap;
 }
 
+.assignment-field-dialog-text {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
 #manual-task-form.manual-task-review-form {
   display: grid;
   max-width: 760px;
@@ -631,6 +655,10 @@ button[data-action="reject"] {
   }
 
   .task-details-dialog-header button {
+    width: 100%;
+  }
+
+  .detail-read-more {
     width: 100%;
   }
 }

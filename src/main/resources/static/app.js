@@ -101,6 +101,10 @@ const briefFileInput = document.getElementById("brief-file");
 const uploadBriefFileButton = document.getElementById("upload-brief-file-button");
 const generateRequirementsButton = document.getElementById("generate-requirements-button");
 const requirementsList = document.getElementById("requirements-list");
+const assignmentFieldDialog = document.getElementById("assignment-field-dialog");
+const closeAssignmentFieldDialogButton = document.getElementById("close-assignment-field-dialog-button");
+const assignmentFieldDialogTitle = document.getElementById("assignment-field-dialog-title");
+const assignmentFieldDialogText = document.getElementById("assignment-field-dialog-text");
 const generateTasksButton = document.getElementById("generate-tasks-button");
 const tasksList = document.getElementById("tasks-list");
 const manualTaskForm = document.getElementById("manual-task-form");
@@ -135,6 +139,8 @@ let activeStudySession = null;
 let studyTimerIntervalId = null;
 let reviewStudySessionId = null;
 let reviewStudySessionWasCompleted = false;
+
+const DETAIL_PREVIEW_LENGTH = 220;
 
 function show(message) {
   output.textContent = message;
@@ -1108,6 +1114,30 @@ function addDetail(label, value, options = {}) {
     return;
   }
 
+  const fullValue = String(value).trim();
+
+  if (options.readMore && fullValue.length > DETAIL_PREVIEW_LENGTH) {
+    paragraph.classList.add("detail-card--preview");
+
+    const previewElement = document.createElement("span");
+    previewElement.classList.add("detail-preview");
+    previewElement.textContent = createDetailPreview(fullValue);
+    paragraph.appendChild(previewElement);
+
+    const readMoreButton = document.createElement("button");
+    readMoreButton.type = "button";
+    readMoreButton.classList.add("secondary-button", "detail-read-more");
+    readMoreButton.textContent = "Read more";
+    readMoreButton.setAttribute("aria-label", `Read full ${label.toLowerCase()}`);
+    readMoreButton.addEventListener("click", () => {
+      openAssignmentFieldDialog(label, fullValue);
+    });
+    paragraph.appendChild(readMoreButton);
+
+    assignmentDetail.appendChild(paragraph);
+    return;
+  }
+
   const items = options.list ? splitDetailItems(value) : [];
 
   if (items.length > 1) {
@@ -1134,6 +1164,28 @@ function addDetail(label, value, options = {}) {
   }
 
   assignmentDetail.appendChild(paragraph);
+}
+
+function createDetailPreview(text) {
+  const normalisedText = String(text).replace(/\s+/g, " ").trim();
+
+  if (normalisedText.length <= DETAIL_PREVIEW_LENGTH) {
+    return normalisedText;
+  }
+
+  const possiblePreview = normalisedText.slice(0, DETAIL_PREVIEW_LENGTH + 1);
+  const finalSpace = possiblePreview.lastIndexOf(" ");
+  const cutAt = finalSpace > DETAIL_PREVIEW_LENGTH * 0.7
+    ? finalSpace
+    : DETAIL_PREVIEW_LENGTH;
+
+  return `${possiblePreview.slice(0, cutAt).trimEnd()}…`;
+}
+
+function openAssignmentFieldDialog(label, value) {
+  assignmentFieldDialogTitle.textContent = label;
+  assignmentFieldDialogText.textContent = value;
+  assignmentFieldDialog.showModal();
 }
 
 async function loadAssignmentDetail(assignmentId, activeTab = "details") {
@@ -1254,7 +1306,8 @@ async function loadAssignmentDetail(assignmentId, activeTab = "details") {
     assignment.assignmentTask,
     {
       variant: "wide",
-      list: true
+      list: true,
+      readMore: true
     }
   );
 
@@ -1263,7 +1316,8 @@ async function loadAssignmentDetail(assignmentId, activeTab = "details") {
     assignment.assessmentCriteria,
     {
       variant: "wide",
-      list: true
+      list: true,
+      readMore: true
     }
   );
 
@@ -1272,7 +1326,8 @@ async function loadAssignmentDetail(assignmentId, activeTab = "details") {
     assignment.learningOutcomesKsbs,
     {
       variant: "wide",
-      list: true
+      list: true,
+      readMore: true
     }
   );
 
@@ -3741,6 +3796,16 @@ closeTaskDetailsDialogButton.addEventListener("click", () => {
 taskDetailsDialog.addEventListener("click", event => {
   if (event.target === taskDetailsDialog) {
     taskDetailsDialog.close();
+  }
+});
+
+closeAssignmentFieldDialogButton.addEventListener("click", () => {
+  assignmentFieldDialog.close();
+});
+
+assignmentFieldDialog.addEventListener("click", event => {
+  if (event.target === assignmentFieldDialog) {
+    assignmentFieldDialog.close();
   }
 });
 
